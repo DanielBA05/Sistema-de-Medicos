@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestionar especialidades</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root { --primary:#0077b6; --muted:#6c757d; --bg:#f2f7ff; --card:#ffffff; --shadow:0 4px 6px rgba(0,0,0,0.08); }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; }
+        header { background: var(--primary); color: #fff; padding: 16px 20px; }
+        header h1 { margin: 0; font-size: 20px; }
+        .wrap { max-width: 900px; margin: 24px auto; background: var(--card); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); }
+        .row { margin-top: 16px; }
+        label { display: block; margin: 8px 0; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #e3e6eb; border-radius: 10px; }
+        .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+        .btn { display: inline-block; padding: 10px 14px; border-radius: 10px; border: none; background: var(--primary); color: #fff; text-decoration: none; cursor: pointer; }
+        .btn.muted { background: var(--muted); }
+        .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .chip { background:#e3f2fd; color:#0b4a6f; padding: 6px 10px; border-radius: 999px; font-size: .9rem; }
+        .alert-ok { background:#e8f5e9; color:#1b5e20; padding:10px; border-radius:8px; margin-bottom:12px; }
+        .alert-err{ background:#ffebee; color:#b71c1c; padding:10px; border-radius:8px; margin-bottom:12px; }
+        hr { border: 0; border-top: 1px solid #eef1f5; margin: 24px 0; }
+        .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .checkbox-list { list-style: none; padding: 0; margin-top: 8px; }
+        .checkbox-list li { margin-bottom: 6px; }
+        .checkbox-list input[type="checkbox"] { margin-right: 8px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1 th:text="${'Gestionar especialidades — Dr. ' + doctor.nombre + ' ' + doctor.apellido}">
+        Gestionar especialidades
+    </h1>
+</header>
+
+<div class="wrap">
+    <div th:if="${okEsp}" class="alert-ok" th:text="${okEsp}">Especialidad creada / disponible.</div>
+    <div th:if="${errorEsp}" class="alert-err" th:text="${errorEsp}">Error.</div>
+
+    <div class="topbar">
+        <div>
+            <div style="opacity:.7; font-size:14px;">Doctor</div>
+            <div style="font-weight:bold; margin-top:2px;" th:text="${doctor.nombre + ' ' + doctor.apellido}">Nombre Apellido</div>
+        </div>
+        <div>
+            <a class="btn muted" th:href="@{'/doctor/' + ${doctor.idDoctor}}">Volver al perfil</a>
+        </div>
+    </div>
+
+    <!-- Selección con lista de checkboxes -->
+    <form class="row" th:action="@{'/doctor/especialidades/' + ${doctor.idDoctor}}" method="post">
+        <label>Selecciona una o varias especialidades</label>
+
+        <div class="chips">
+            <span class="chip" th:each="e : ${doctor.especialidades}" th:text="${e.nomEspecialidad}">Cardiología</span>
+        </div>
+
+        <ul class="checkbox-list">
+            <li th:each="e : ${todasEspecialidades}">
+                <label>
+                    <input type="checkbox" name="especialidadesIds" th:value="${e.idEspecialidad}" th:checked="${idsActuales.contains(e.idEspecialidad)}"/>
+                    <span th:text="${e.nomEspecialidad}">Cardiología</span>
+                </label>
+            </li>
+        </ul>
+
+        <div class="actions">
+            <button class="btn" type="submit">Guardar cambios</button>
+            <a class="btn muted" th:href="@{'/doctor/' + ${doctor.idDoctor}}">Cancelar</a>
+        </div>
+    </form>
+
+    <hr/>
+
+    <!-- Crear nueva especialidad (opcional) -->
+    <h3>Agregar nueva especialidad</h3>
+    <form class="row" th:action="@{'/doctor/especialidades/' + ${doctor.idDoctor} + '/crear'}" method="post">
+        <label for="nuevaEsp">Nombre de especialidad</label>
+        <input id="nuevaEsp" name="nombre" placeholder="Ej. Cardiología Intervencionista" />
+        <div class="actions">
+            <button class="btn" type="submit">Agregar</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

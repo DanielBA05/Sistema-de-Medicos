@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><title>Editar Doctor</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#f2f7ff;margin:0}
+        .wrap{max-width:800px;margin:24px auto;background:#fff;padding:24px;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+        label{display:block;margin:10px 0 4px} input{width:100%;padding:8px;border:1px solid #ddd;border-radius:8px}
+        button{margin-top:16px;padding:10px 14px;border:none;border-radius:8px;background:#0077b6;color:#fff;cursor:pointer}
+        a{margin-left:10px}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h2 th:text="${'Editar: ' + doctor.nombre + ' ' + doctor.apellido}">Editar</h2>
+    <form th:action="@{/doctor/guardar}" th:object="${doctor}" method="post">
+        <input type="hidden" th:field="*{idDoctor}"/>
+        <label>Nombre</label>
+        <input th:field="*{nombre}" required maxlength="100"/>
+        <label>Apellido</label>
+        <input th:field="*{apellido}" required maxlength="100"/>
+        <label>Teléfono</label>
+        <input th:field="*{telefono}" maxlength="50" placeholder="+506 8888-8888"/>
+        <label>Dirección</label>
+        <input th:field="*{direccion}" maxlength="150" placeholder="Provincia, cantón, distrito..."/>
+        <button type="submit">Guardar</button>
+        <a th:href="@{'/doctor/' + ${doctor.idDoctor}}">Cancelar</a>
+    </form>
+</div>
+</body>
+</html>
