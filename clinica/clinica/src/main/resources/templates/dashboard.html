@@ -32,12 +32,12 @@
             position: relative;
         }
 
-        /* Capa semitransparente sobre la imagen (opcional para mejor lectura) */
+        /* Capa semitransparente sobre la imagen */
         main::before {
             content: "";
             position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0.85); /* ajusta la opacidad si quieres ver más la imagen */
+            background: rgba(255, 255, 255, 0.85); 
             z-index: 0;
         }
 
@@ -52,7 +52,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: transform 0.2s;
             position: relative;
-            z-index: 1; /* importante: asegura que estén encima del overlay */
+            z-index: 1; 
         }
 
         .card:hover {
