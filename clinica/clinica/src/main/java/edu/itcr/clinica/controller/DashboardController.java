@@ -18,10 +18,10 @@ public class DashboardController {
 
     @GetMapping("/")
     public String home(Model model) {
-        // Carga un doctor para mostrar el nombre en el header si quieres
+        
         Doctor doctor = doctorRepo.findAll().stream().findFirst().orElse(null);
         model.addAttribute("doctor", doctor);
-        return "dashboard"; // tu panel principal (el HTML que ya tienes)
+        return "dashboard"; 
     }
 
 
