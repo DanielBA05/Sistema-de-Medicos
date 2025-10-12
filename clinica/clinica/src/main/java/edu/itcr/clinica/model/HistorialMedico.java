@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "historial_medico", schema = "clinica",
-        // si quieres reforzar unicidad de cita a nivel de tabla (además del unique en la FK)
+     
         uniqueConstraints = @UniqueConstraint(name = "uk_historial_id_cita", columnNames = "id_cita"))
 public class HistorialMedico {
 
@@ -19,14 +19,13 @@ public class HistorialMedico {
     @Column(name = "id_historial")
     private Long idHistorial;
 
-    // Paciente al que pertenece este historial de la cita (redundante con cita.paciente,
-    // pero útil para consultas directas). Lo marcamos requerido.
+    
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_paciente", nullable = false)
     @JsonIgnoreProperties({ "hibernateLazyInitializer" })
     private Paciente paciente;
 
-    // Relación 1–1 con Cita (una cita genera un historial). Unica por cita.
+   
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_cita", unique = true, nullable = false)
     @JsonIgnoreProperties({ "doctor", "especialidad", "paciente", "hibernateLazyInitializer" })
@@ -41,12 +40,12 @@ public class HistorialMedico {
     @Column(name = "tratamiento", columnDefinition = "TEXT", nullable = false)
     private String tratamiento;
 
-    // 1–N Recetas ligadas a este historial
+    
     @OneToMany(mappedBy = "historial", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({ "historial", "hibernateLazyInitializer" })
     private List<Receta> recetas = new ArrayList<>();
 
-    // ===== Ciclo de vida: autocompletar campos derivados =====
+   
     @PrePersist
     public void prePersist() {
         if (this.cita != null) {
@@ -62,7 +61,7 @@ public class HistorialMedico {
         }
     }
 
-    // ===== Helpers para recetas =====
+    
     public void addReceta(Receta r) {
         if (r == null) return;
         this.recetas.add(r);
@@ -101,7 +100,7 @@ public class HistorialMedico {
         }
     }
 
-    // ===== equals/hashCode por id =====
+    
     @Override public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof HistorialMedico)) return false;
