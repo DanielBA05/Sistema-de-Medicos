@@ -43,21 +43,21 @@ public class HistorialMedicoController {
     public static class RecetaDTO {
         public String medicamento;
         public String dosis;
-        public String frecuencia; // opcional
-        public Integer duracion;  // opcional (p. ej., días)
+        public String frecuencia;
+        public Integer duracion;  
     }
 
     public static class RegistrarAtencionRequest {
-        public Long citaId;            // requerido
-        public String diagnostico;     // requerido
-        public String tratamiento;     // requerido
-        public List<RecetaDTO> recetas; // opcional
-        public LocalDate fechaConsulta; // opcional
+        public Long citaId;            
+        public String diagnostico;    
+        public String tratamiento;    
+        public List<RecetaDTO> recetas; 
+        public LocalDate fechaConsulta; 
     }
 
     // ==================== VISTAS (Thymeleaf) ====================
 
-    // Lista de pacientes para seleccionar
+ 
     @GetMapping("/vista")
     public String vistaPacientes(@RequestParam(value = "q", required = false) String q, Model model) {
         List<Paciente> pacientes = (q == null || q.isBlank())
@@ -66,11 +66,11 @@ public class HistorialMedicoController {
 
         model.addAttribute("pacientes", pacientes);
         model.addAttribute("q", q);
-        // Sin subcarpeta: templates/listaPacientes.html
+     
         return "listaPacientes";
     }
 
-    // Detalle del historial del paciente (citas, recetas, etc.)
+  
     @GetMapping("/{idPaciente}")
     @Transactional(readOnly = true)
     public String vistaHistorialPorPaciente(@PathVariable Long idPaciente, Model model) {
@@ -90,7 +90,7 @@ public class HistorialMedicoController {
         return "detalleHistorial";
     }
 
-    // ==================== API REST (JSON) ====================
+  
 
     @GetMapping
     @ResponseBody
@@ -130,7 +130,7 @@ public class HistorialMedicoController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La cita ya tiene historial.");
         }
 
-        // Crear historial
+    
         HistorialMedico h = new HistorialMedico();
         h.setCita(cita);
         h.setPaciente(cita.getPaciente()); // redundante pero práctico para consultas
@@ -157,7 +157,7 @@ public class HistorialMedicoController {
                 rec.setMedicamento(r.medicamento.trim());
                 rec.setDosis(r.dosis.trim());
                 rec.setFrecuencia(isBlank(r.frecuencia) ? null : r.frecuencia.trim());
-                rec.setDuracion(r.duracion); // puede ser null
+                rec.setDuracion(r.duracion); 
                 creadas.add(recetaRepo.save(rec));
             }
         }
@@ -172,6 +172,6 @@ public class HistorialMedicoController {
         return h;
     }
 
-    // ================= Util =================
+    
     private boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
 }
