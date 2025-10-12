@@ -24,8 +24,8 @@ public class EspecialidadController {
     @GetMapping
     public String listar(Model model) {
         List<Especialidad> especialidades = repo.findAll();
-        model.addAttribute("especialidades", especialidades); // ahora Model.addAttribute existe
-        return "especialidades"; // templates/especialidades.html
+        model.addAttribute("especialidades", especialidades); 
+        return "especialidades"; 
     }
 
     @PostMapping
