@@ -40,7 +40,7 @@ public class PacienteController {
                                 model.addAttribute("mensaje", "No se encontró el paciente con ID " + searchId);
                             }
                     );
-            // Para prellenar el input del buscador si usas th:value="${param.id}" o "searchId"
+          
             model.addAttribute("searchId", searchId);
         } else {
             model.addAttribute("pacientes", pacienteRepository.findAll());
@@ -51,15 +51,15 @@ public class PacienteController {
                     .ifPresent(p -> model.addAttribute("pacienteEdit", p));
         }
 
-        return "pacientes"; // -> src/main/resources/templates/pacientes.html
+        return "pacientes";
     }
 
-    // Crear desde vista (form-url-encoded)
+   
     @PostMapping("/vista/crear")
     public String crearDesdeVista(@ModelAttribute Paciente paciente) {
         Paciente guardado = pacienteRepository.save(paciente);
 
-        // Crear historial vacío automáticamente (igual que en POST JSON)
+       
         HistorialMedico historial = new HistorialMedico();
         historial.setPaciente(guardado);
         historial.setCita(null);
@@ -71,7 +71,7 @@ public class PacienteController {
         return "redirect:/pacientes/vista";
     }
 
-    // Editar desde vista
+ 
     @PostMapping("/vista/{id}/editar")
     public String editarDesdeVista(@PathVariable Long id, @ModelAttribute Paciente cambios) {
         pacienteRepository.findById(id).ifPresent(p -> {
@@ -87,14 +87,14 @@ public class PacienteController {
         return "redirect:/pacientes/vista";
     }
 
-    // Eliminar desde vista
+ 
     @PostMapping("/vista/{id}/eliminar")
     public String eliminarDesdeVista(@PathVariable Long id) {
         pacienteRepository.deleteById(id);
         return "redirect:/pacientes/vista";
     }
 
-    // ===================== REST (JSON) =====================
+  
 
     @GetMapping(produces = "application/json")
     @ResponseBody
@@ -107,7 +107,7 @@ public class PacienteController {
     public Paciente crearPaciente(@RequestBody Paciente paciente) {
         Paciente guardado = pacienteRepository.save(paciente);
 
-        // Crear historial vacío automáticamente
+      
         HistorialMedico historial = new HistorialMedico();
         historial.setPaciente(guardado);
         historial.setCita(null);
@@ -138,6 +138,6 @@ public class PacienteController {
     @ResponseBody
     public void eliminarPaciente(@PathVariable Long id) {
         pacienteRepository.deleteById(id);
-        // Si tu FK tiene ON DELETE CASCADE, historiales se eliminan automáticamente.
+       
     }
 }
