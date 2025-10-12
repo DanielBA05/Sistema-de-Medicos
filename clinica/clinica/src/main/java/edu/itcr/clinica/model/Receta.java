@@ -20,10 +20,10 @@ public class Receta {
     @Column(nullable = false, length = 100)
     private String dosis;
 
-    @Column(length = 100)               // opcional
+    @Column(length = 100)              
     private String frecuencia;
 
-    @Column(name = "duracion")          // opcional (p. ej. en días)
+    @Column(name = "duracion")          
     private Integer duracion;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
