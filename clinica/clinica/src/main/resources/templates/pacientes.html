@@ -25,7 +25,7 @@
         .alert{background:#fff3cd;color:#7a5e00;border:1px solid #ffe69c;padding:10px 12px;border-radius:8px;margin-bottom:10px}
         @media (max-width: 900px){ main{grid-template-columns:1fr} }
 
-        /* Botón flotante Home */
+        /* Botón  Home */
         .fab-home{
             position:fixed;right:20px;bottom:20px;
             background:#0077b6;color:#fff;border-radius:999px;
@@ -57,7 +57,7 @@
         <div class="row" style="justify-content:space-between; margin-bottom:8px">
             <a class="btn" th:href="@{/}">← Volver</a>
 
-            <!-- Buscador por ID (GET a la misma vista) -->
+            <!-- Buscador por ID  -->
             <form class="row" th:action="@{/pacientes/vista}" method="get" style="gap:6px">
                 <input
                         type="number"
@@ -76,7 +76,7 @@
             <span class="muted" th:text="${'Total: ' + #lists.size(pacientes)}">Total: 0</span>
         </div>
 
-        <!-- Mensaje opcional (por ejemplo, ID no encontrado) -->
+        <!-- Mensaje opcional  -->
         <div class="alert" th:if="${mensaje != null}" th:text="${mensaje}">Mensaje…</div>
 
         <table id="tablaPacientes">
@@ -89,9 +89,9 @@
             </tr>
             </thead>
             <tbody>
-            <!-- Repite ambas filas (resumen y detalles) por paciente -->
+            <!-- Repite ambas filas  por paciente -->
             <th:block th:each="p, idx : ${pacientes}">
-                <!-- Fila principal (resumen) -->
+                <!-- Fila principal -->
                 <tr th:attr="data-row=${idx.index}">
                     <td th:text="${p.idPaciente}">1</td>
                     <td th:text="${p.nombre}">Ana</td>
@@ -102,11 +102,11 @@
 
                         <a th:href="@{'/pacientes/vista?edit=' + ${p.idPaciente}}" class="btn">Editar</a>
 
-                        <!-- IMPORTANTE: no enviamos de una; abrimos modal -->
+                      
                         <form class="form-eliminar"
                               th:action="@{'/pacientes/vista/' + ${p.idPaciente} + '/eliminar'}"
                               method="post" style="display:inline">
-                            <!-- si usas CSRF, aquí va tu input hidden de _csrf -->
+                       
                             <button type="button"
                                     class="danger btn-eliminar"
                                     th:attr="data-id=${p.idPaciente}, data-nombre=${p.nombre}, data-apellido=${p.apellido}">
@@ -169,7 +169,7 @@
             </form>
         </section>
 
-        <!-- EDITAR (solo se renderiza si existe pacienteEdit; se auto-abre) -->
+        <!-- EDITAR  -->
         <section id="panelEditar" th:classappend="${pacienteEdit == null} ? ' hidden'">
             <h4 th:text="${pacienteEdit != null ? 'Editar paciente #' + pacienteEdit.idPaciente : 'Editar'}">Editar</h4>
             <form th:if="${pacienteEdit != null}"
@@ -208,7 +208,7 @@
     </aside>
 </main>
 
-<!-- Botón flotante al menú principal -->
+<!-- Botón al menú principal -->
 <a class="fab-home" th:href="@{/}">🏠 Menú principal</a>
 
 <!-- Modal de confirmación de eliminación -->
@@ -253,14 +253,14 @@
         btnCancelarCrear.addEventListener('click', () => panelCrear.classList.add('hidden'));
     }
 
-    // Si se llega con ?edit=ID, el panel de editar ya está renderizado; aseguramos que esté visible
+  
     const panelEditar = document.getElementById('panelEditar');
     if (panelEditar && panelEditar.querySelector('form')) {
         panelEditar.classList.remove('hidden');
         if (panelCrear && !panelCrear.classList.contains('hidden')) panelCrear.classList.add('hidden');
     }
 
-    // -------- Modal de confirmación de eliminación --------
+    // -------- confirmación de eliminación --------
     const modal = document.getElementById('confirmModal');
     const confirmText = document.getElementById('confirmText');
     const btnCancelDelete = document.getElementById('btnCancelDelete');
@@ -272,7 +272,7 @@
         const btn = e.target.closest('.btn-eliminar');
         if (!btn) return;
 
-        // Tomamos el form más cercano (el que tiene la acción POST)
+        // Tomamos el form más cercano 
         const form = btn.closest('form.form-eliminar');
         if (!form) return;
 
@@ -289,7 +289,7 @@
         modal.setAttribute('aria-hidden', 'false');
     });
 
-    // Confirmar eliminación
+    // aqui se termina de  Confirmar la eliminación
     if (btnConfirmDelete) {
         btnConfirmDelete.addEventListener('click', function(){
             if (currentDeleteForm) {
