@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Pacientes</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#f2f7ff;margin:0}
+        header{background:#0077b6;color:#fff;padding:16px 24px}
+        main{display:grid;grid-template-columns:2fr 1fr;gap:24px;padding:24px}
+        table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden}
+        th,td{padding:10px 12px;border-bottom:1px solid #ececec;text-align:left}
+        th{background:#e7f1ff}
+        .card{background:#fff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,.08);padding:16px}
+        input,select{width:100%;padding:8px;border:1px solid #dbe7ff;border-radius:8px}
+        button{padding:8px 12px;border:none;border-radius:8px;background:#0077b6;color:#fff;cursor:pointer}
+        .danger{background:#c0392b}
+        .muted{color:#6b7280}
+        a.btn,button.btn{display:inline-block;margin:0 0 12px;padding:8px 12px;background:#e7f1ff;color:#073b63;border-radius:8px;text-decoration:none}
+        .row{display:flex;gap:8px;align-items:center}
+        .right{margin-left:auto}
+        .hidden{display:none}
+        .actions button, .actions a{margin-right:6px}
+        .subrow{background:#fbfdff}
+        .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef6ff;color:#073b63;font-size:12px}
+        .alert{background:#fff3cd;color:#7a5e00;border:1px solid #ffe69c;padding:10px 12px;border-radius:8px;margin-bottom:10px}
+        @media (max-width: 900px){ main{grid-template-columns:1fr} }
+
+        /* Botón flotante Home */
+        .fab-home{
+            position:fixed;right:20px;bottom:20px;
+            background:#0077b6;color:#fff;border-radius:999px;
+            padding:12px 16px;text-decoration:none;box-shadow:0 6px 16px rgba(0,0,0,.15);
+        }
+
+        /* Modal de confirmación */
+        .modal-overlay{
+            position:fixed;inset:0;background:rgba(0,0,0,.45);
+            display:none;align-items:center;justify-content:center;z-index:1000;
+        }
+        .modal{background:#fff;border-radius:12px;max-width:520px;width:92%;padding:20px;
+            box-shadow:0 10px 24px rgba(0,0,0,.25)}
+        .modal h3{margin:0 0 8px 0}
+        .modal p{margin:8px 0 16px 0}
+        .modal .actions{display:flex;gap:8px;justify-content:flex-end}
+        .btn-outline{background:#eef6ff;color:#073b63;border:1px solid #dbe7ff}
+    </style>
+
+</head>
+<body>
+<header>
+    <h2>Pacientes</h2>
+</header>
+
+<main>
+    <!-- Listado -->
+    <section class="card">
+        <div class="row" style="justify-content:space-between; margin-bottom:8px">
+            <a class="btn" th:href="@{/}">← Volver</a>
+
+            <!-- Buscador por ID (GET a la misma vista) -->
+            <form class="row" th:action="@{/pacientes/vista}" method="get" style="gap:6px">
+                <input
+                        type="number"
+                        min="1"
+                        name="id"
+                        placeholder="Buscar por ID…"
+                        style="width:220px"
+                        th:value="${param.id != null ? param.id : searchId}"
+                />
+                <button type="submit">Buscar</button>
+                <a th:href="@{/pacientes/vista}" class="btn">Limpiar</a>
+            </form>
+
+            <!-- Botón que despliega el formulario de creación -->
+            <button id="btnToggleCrear" class="btn right" type="button">＋ Crear paciente</button>
+            <span class="muted" th:text="${'Total: ' + #lists.size(pacientes)}">Total: 0</span>
+        </div>
+
+        <!-- Mensaje opcional (por ejemplo, ID no encontrado) -->
+        <div class="alert" th:if="${mensaje != null}" th:text="${mensaje}">Mensaje…</div>
+
+        <table id="tablaPacientes">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Repite ambas filas (resumen y detalles) por paciente -->
+            <th:block th:each="p, idx : ${pacientes}">
+                <!-- Fila principal (resumen) -->
+                <tr th:attr="data-row=${idx.index}">
+                    <td th:text="${p.idPaciente}">1</td>
+                    <td th:text="${p.nombre}">Ana</td>
+                    <td th:text="${p.apellido}">Gómez</td>
+                    <td class="actions">
+                        <button type="button" class="btn btn-ver"
+                                th:attr="data-target=${'det-' + idx.index}">Ver más</button>
+
+                        <a th:href="@{'/pacientes/vista?edit=' + ${p.idPaciente}}" class="btn">Editar</a>
+
+                        <!-- IMPORTANTE: no enviamos de una; abrimos modal -->
+                        <form class="form-eliminar"
+                              th:action="@{'/pacientes/vista/' + ${p.idPaciente} + '/eliminar'}"
+                              method="post" style="display:inline">
+                            <!-- si usas CSRF, aquí va tu input hidden de _csrf -->
+                            <button type="button"
+                                    class="danger btn-eliminar"
+                                    th:attr="data-id=${p.idPaciente}, data-nombre=${p.nombre}, data-apellido=${p.apellido}">
+                                Eliminar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+
+                <!-- Fila expandible con detalles -->
+                <tr class="subrow hidden" th:id="${'det-' + idx.index}">
+                    <td colspan="4">
+                        <div class="row" style="gap:24px;flex-wrap:wrap">
+                            <div><span class="badge">Sexo</span><div th:text="${p.sexo}">F</div></div>
+                            <div><span class="badge">Fecha Nac.</span>
+                                <div th:text="${#temporals.format(p.fechaNacimiento, 'yyyy-MM-dd')}">1990-01-01</div>
+                            </div>
+                            <div><span class="badge">Correo</span><div th:text="${p.correo}">ana@ejemplo.com</div></div>
+                            <div><span class="badge">Teléfono</span><div th:text="${p.telefono}">8888-8888</div></div>
+                            <div><span class="badge">Dirección</span><div th:text="${p.direccion}">San José</div></div>
+                        </div>
+                    </td>
+                </tr>
+            </th:block>
+
+            <!-- En caso de lista vacía -->
+            <tr th:if="${#lists.isEmpty(pacientes)}">
+                <td colspan="4" class="muted">No hay pacientes para mostrar.</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Panel lateral: formularios colapsables -->
+    <aside class="card">
+        <h3>Acciones</h3>
+
+        <!-- CREAR -->
+        <section id="panelCrear" class="hidden">
+            <h4>Crear paciente</h4>
+            <form th:action="@{/pacientes/vista/crear}" method="post">
+                <label>Nombre<input name="nombre" required></label>
+                <label>Apellido<input name="apellido" required></label>
+                <label>Fecha Nac.<input type="date" name="fechaNacimiento" required></label>
+                <label>Sexo
+                    <select name="sexo">
+                        <option value="">—</option><option value="M">M</option><option value="F">F</option>
+                    </select>
+                </label>
+                <label>Dirección<input name="direccion"></label>
+                <label>Teléfono<input name="telefono"></label>
+                <label>Correo<input type="email" name="correo"></label>
+                <div class="row" style="margin-top:8px">
+                    <button type="submit">Guardar</button>
+                    <button type="button" class="btn" id="btnCancelarCrear">Cancelar</button>
+                </div>
+                <p class="muted" style="margin-top:8px">
+                    Al crear un paciente, se generará automáticamente un historial médico vacío.
+                </p>
+            </form>
+        </section>
+
+        <!-- EDITAR (solo se renderiza si existe pacienteEdit; se auto-abre) -->
+        <section id="panelEditar" th:classappend="${pacienteEdit == null} ? ' hidden'">
+            <h4 th:text="${pacienteEdit != null ? 'Editar paciente #' + pacienteEdit.idPaciente : 'Editar'}">Editar</h4>
+            <form th:if="${pacienteEdit != null}"
+                  th:action="@{'/pacientes/vista/' + ${pacienteEdit.idPaciente} + '/editar'}"
+                  method="post">
+                <label>Nombre
+                    <input name="nombre" th:value="${pacienteEdit.nombre}" required>
+                </label>
+                <label>Apellido
+                    <input name="apellido" th:value="${pacienteEdit.apellido}" required>
+                </label>
+                <label>Fecha Nac.
+                    <input type="date" name="fechaNacimiento"
+                           th:value="${#temporals.format(pacienteEdit.fechaNacimiento, 'yyyy-MM-dd')}" required>
+                </label>
+                <label>Sexo
+                    <select name="sexo" th:value="${pacienteEdit.sexo}">
+                        <option value="">—</option><option value="M">M</option><option value="F">F</option>
+                    </select>
+                </label>
+                <label>Dirección
+                    <input name="direccion" th:value="${pacienteEdit.direccion}">
+                </label>
+                <label>Teléfono
+                    <input name="telefono" th:value="${pacienteEdit.telefono}">
+                </label>
+                <label>Correo
+                    <input type="email" name="correo" th:value="${pacienteEdit.correo}">
+                </label>
+                <div class="row" style="margin-top:8px">
+                    <button type="submit">Actualizar</button>
+                    <a class="btn" th:href="@{/pacientes/vista}" id="btnCancelarEditar">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </aside>
+</main>
+
+<!-- Botón flotante al menú principal -->
+<a class="fab-home" th:href="@{/}">🏠 Menú principal</a>
+
+<!-- Modal de confirmación de eliminación -->
+<div id="confirmModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <h3 id="confirmTitle">Confirmar eliminación</h3>
+        <p id="confirmText">¿Eliminar este paciente?</p>
+        <div class="actions">
+            <button type="button" class="btn-outline" id="btnCancelDelete">Cancelar</button>
+            <button type="button" class="danger" id="btnConfirmDelete">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle de detalles "Ver más"
+    document.addEventListener('click', function(e){
+        const btn = e.target.closest('.btn-ver');
+        if (!btn) return;
+        const id = btn.getAttribute('data-target');
+        const row = document.getElementById(id);
+        if (row) {
+            row.classList.toggle('hidden');
+            btn.textContent = row.classList.contains('hidden') ? 'Ver más' : 'Ver menos';
+        }
+    });
+
+    // Toggle formulario Crear
+    const panelCrear = document.getElementById('panelCrear');
+    const btnToggleCrear = document.getElementById('btnToggleCrear');
+    const btnCancelarCrear = document.getElementById('btnCancelarCrear');
+
+    if (btnToggleCrear) {
+        btnToggleCrear.addEventListener('click', () => {
+            panelCrear.classList.toggle('hidden');
+            // Cierra editar si está abierto
+            const pEditar = document.getElementById('panelEditar');
+            if (pEditar && !pEditar.classList.contains('hidden')) pEditar.classList.add('hidden');
+        });
+    }
+    if (btnCancelarCrear) {
+        btnCancelarCrear.addEventListener('click', () => panelCrear.classList.add('hidden'));
+    }
+
+    // Si se llega con ?edit=ID, el panel de editar ya está renderizado; aseguramos que esté visible
+    const panelEditar = document.getElementById('panelEditar');
+    if (panelEditar && panelEditar.querySelector('form')) {
+        panelEditar.classList.remove('hidden');
+        if (panelCrear && !panelCrear.classList.contains('hidden')) panelCrear.classList.add('hidden');
+    }
+
+    // -------- Modal de confirmación de eliminación --------
+    const modal = document.getElementById('confirmModal');
+    const confirmText = document.getElementById('confirmText');
+    const btnCancelDelete = document.getElementById('btnCancelDelete');
+    const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+    let currentDeleteForm = null;
+
+    // Abrir modal al hacer click en cualquier botón "Eliminar"
+    document.addEventListener('click', function(e){
+        const btn = e.target.closest('.btn-eliminar');
+        if (!btn) return;
+
+        // Tomamos el form más cercano (el que tiene la acción POST)
+        const form = btn.closest('form.form-eliminar');
+        if (!form) return;
+
+        const id = btn.getAttribute('data-id') || '';
+        const nombre = btn.getAttribute('data-nombre') || '';
+        const apellido = btn.getAttribute('data-apellido') || '';
+
+        confirmText.textContent = `¿Seguro que deseas eliminar al paciente #${id} (${nombre} ${apellido})? ` +
+            `Esta acción no se puede deshacer.`;
+        currentDeleteForm = form;
+
+        // Mostrar modal
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    });
+
+    // Confirmar eliminación
+    if (btnConfirmDelete) {
+        btnConfirmDelete.addEventListener('click', function(){
+            if (currentDeleteForm) {
+                currentDeleteForm.submit();
+            }
+        });
+    }
+
+    // Cancelar/ cerrar modal
+    function closeModal(){
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        currentDeleteForm = null;
+    }
+    if (btnCancelDelete) btnCancelDelete.addEventListener('click', closeModal);
+    // Cerrar si se hace click fuera del cuadro
+    modal.addEventListener('click', function(e){
+        if (e.target === modal) closeModal();
+    });
+    // Cerrar con ESC
+    document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
+    });
+</script>
+</body>
+</html>

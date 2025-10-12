@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clínica | Citas</title>
+    <style>
+        :root { --primary:#2563eb; --muted:#f3f4f6; --danger:#ef4444; --ok:#16a34a; }
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; margin:0; background:#fff; color:#111; }
+        header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #e5e7eb; position:sticky; top:0; background:#fff; z-index:10; }
+        h1 { font-size:1.25rem; margin:0; }
+        .row { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; padding:1rem; }
+        .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.03); overflow:hidden; }
+        .card header { padding:.75rem 1rem; border-bottom:1px solid #e5e7eb; }
+        .card .content { padding:1rem; }
+        .toolbar { display:flex; gap:.5rem; align-items:center; }
+        .toolbar input, .toolbar select { padding:.5rem .6rem; border:1px solid #d1d5db; border-radius:8px; }
+        .btn { border:1px solid #d1d5db; background:#fff; padding:.5rem .8rem; border-radius:8px; cursor:pointer; text-decoration: none;color: #111;}
+        .btn.primary { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .btn.danger { background:var(--danger); color:#fff; border-color:var(--danger); }
+        .btn.ok { background:var(--ok); color:#fff; border-color:var(--ok); }
+        .calendar { padding:1rem; }
+        .month-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem; }
+        .grid { display:grid; grid-template-columns: repeat(7, 1fr); gap:.35rem; }
+        .dow, .day { text-align:center; padding:.4rem 0; font-size:.9rem; }
+        .dow { color:#6b7280; }
+        .day { background:#fff; border:1px solid #e5e7eb; border-radius:10px; min-height:64px; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+        .day:hover { outline:2px solid var(--primary); outline-offset:-2px; }
+        .day.muted { color:#9ca3af; background:#fafafa; }
+        .day.selected { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,.15) inset; }
+        .badge { position:absolute; right:6px; top:6px; background:var(--primary); color:#fff; border-radius:999px; padding:0 .4rem; font-size:.7rem; }
+        .list { display:flex; flex-direction:column; gap:.5rem; }
+        .item { border:1px solid #e5e7eb; border-radius:10px; padding:.75rem; display:flex; align-items:center; justify-content:space-between; }
+        .item .left { display:flex; flex-direction:column; gap:.25rem; }
+        .muted { color:#6b7280; }
+        dialog[open] { animation: pop .12s ease-out; }
+        @keyframes pop { from { transform: scale(.98); opacity:.6; } to { transform: scale(1); opacity:1; } }
+        dialog { border:1px solid #e5e7eb; border-radius:12px; padding:0; max-width:620px; width:calc(100% - 2rem); }
+        dialog header { display:flex; align-items:center; justify-content:space-between; padding:1rem; border-bottom:1px solid #e5e7eb; }
+        dialog .content { padding:1rem; display:grid; gap:.75rem; }
+        .field { display:grid; gap:.35rem; }
+        .field label { font-size:.9rem; color:#374151; }
+        .field input, .field select, .field textarea { padding:.6rem .7rem; border:1px solid #d1d5db; border-radius:8px; }
+        .actions { display:flex; justify-content:flex-end; gap:.5rem; padding:1rem; border-top:1px solid #e5e7eb; }
+        @media (max-width: 980px) { .row { grid-template-columns: 1fr; } }
+
+        /* Secciones atendidas/canceladas */
+        .section { border: 1px solid #e5e7eb; border-radius: 10px; margin-top: .75rem; overflow: hidden; }
+        .section header { display: flex; align-items: center; justify-content: space-between; padding: .6rem .8rem; background: #fafafa; cursor: pointer; }
+        .section header strong { font-weight: 600; }
+        .section .section-content { display: none; padding: .75rem; }
+        .section.open .section-content { display: block; }
+        .badge-pill { background:#eef2ff; color:#1e40af; font-size:.75rem; border-radius:999px; padding:.05rem .5rem; border:1px solid #dbeafe; }
+        .alert{
+            display:none;
+            border:1px solid #fecaca;
+            background:#fef2f2;
+            color:#991b1b;
+            border-radius:10px;
+            padding:.6rem .75rem;
+        }
+        /* Marca de campo inválido */
+        .invalid { border-color: var(--danger) !important; }
+        /* FAB Menú principal */
+        .fab-home{
+            position:fixed; right:20px; bottom:20px;
+            background:#0077b6; color:#fff; border-radius:999px;
+            padding:12px 16px; text-decoration:none;
+            box-shadow:0 6px 16px rgba(0,0,0,.15); z-index:1000;
+        }
+
+    </style>
+
+</head>
+
+<!-- Si usas Thymeleaf: <body th:attr="data-doctor-id=${doctor.idDoctor}"> -->
+<body data-doctor-id="__DOCTOR_ID__">
+<header>
+    <div style="display:flex; align-items:center; gap:.5rem;">
+        <a class="btn" th:href="@{/}">← Volver</a>
+        <h1>Citas</h1>
+    </div>
+    <div class="toolbar">
+        <button class="btn primary" id="btnNueva">Nueva cita</button>
+    </div>
+</header>
+
+
+<main class="row">
+    <!-- Calendario mensual -->
+    <section class="card">
+        <header>
+            <div class="month-nav">
+                <button class="btn" id="prevMonth">◀</button>
+                <div id="monthLabel" style="font-weight:600"></div>
+                <button class="btn" id="nextMonth">▶</button>
+            </div>
+        </header>
+        <div class="calendar">
+            <div class="grid" id="dow">
+                <div class="dow">Lun</div><div class="dow">Mar</div><div class="dow">Mié</div>
+                <div class="dow">Jue</div><div class="dow">Vie</div><div class="dow">Sáb</div><div class="dow">Dom</div>
+            </div>
+            <div class="grid" id="days"></div>
+        </div>
+    </section>
+
+    <!-- Lista del día -->
+    <section class="card">
+        <header>
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
+                <div>
+                    <div style="font-weight:600">Citas del <span id="labelFecha"></span></div>
+                    <div class="muted" id="labelResumen"></div>
+                </div>
+                <div class="toolbar">
+                    <input type="date" id="pickerFecha" />
+                    <button class="btn" id="btnRefrescar">Refrescar</button>
+                </div>
+            </div>
+        </header>
+        <div class="content">
+            <div id="lista" class="list"></div>
+        </div>
+    </section>
+</main>
+
+<!-- Modal Crear Cita -->
+<dialog id="dlgNueva">
+    <header>
+        <div style="font-weight:600">Nueva cita</div>
+        <button class="btn" id="dlgClose">✕</button>
+    </header>
+    <form class="content" id="formNueva">
+        <div id="dlgError" class="alert"></div>
+
+        <div class="field">
+            <label>Fecha</label>
+            <input type="date" id="nc_fecha" required />
+        </div>
+        <div class="field">
+            <label>Hora</label>
+            <input type="time" id="nc_hora" required />
+        </div>
+        <div class="field">
+            <label>Paciente</label>
+            <select id="nc_paciente" required>
+                <option value="">Cargando…</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Especialidad</label>
+            <select id="nc_especialidad" required>
+                <option value="">Cargando…</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Motivo</label>
+            <textarea id="nc_motivo" rows="3" placeholder="Motivo de la consulta (opcional)"></textarea>
+        </div>
+    </form>
+    <div class="actions">
+        <button class="btn" id="dlgCancel">Cancelar</button>
+        <button class="btn primary" id="dlgCreate">Crear cita</button>
+    </div>
+</dialog>
+
+<!-- Modal Atender Cita (Historial + Recetas) -->
+<dialog id="dlgAtender">
+    <header>
+        <div style="font-weight:600">Atender cita</div>
+        <button class="btn" id="dlgAtClose">✕</button>
+    </header>
+    <form class="content" id="formAtender">
+        <input type="hidden" id="at_citaId" />
+        <div class="muted" id="at_info"></div>
+
+        <div class="field">
+            <label>Diagnóstico</label>
+            <textarea id="at_diag" rows="3" required></textarea>
+        </div>
+        <div class="field">
+            <label>Tratamiento</label>
+            <textarea id="at_trat" rows="3" required></textarea>
+        </div>
+
+        <div class="field">
+            <label style="display:flex;align-items:center;gap:.5rem">
+                <input type="checkbox" id="at_hasReceta" />
+                Añadir receta(s)
+            </label>
+        </div>
+
+        <div id="recetasBox" style="display:none; border:1px dashed #d1d5db; border-radius:10px; padding:.75rem;">
+            <div id="recetasList" class="list" style="gap:.75rem;"></div>
+            <div>
+                <button type="button" class="btn" id="btnAddReceta">Agregar receta</button>
+            </div>
+        </div>
+    </form>
+    <div class="actions">
+        <button class="btn" id="dlgAtCancel">Cancelar</button>
+        <button class="btn ok" id="dlgAtSave">Registrar</button>
+    </div>
+</dialog>
+
+<script>
+    // Si NO usas Thymeleaf, fija el ID del único doctor aquí:
+    window.DOCTOR_ID = 1; // <-- pon aquí el id real del único doctor
+</script>
+
+<script>
+    // ===== Doctor único =====
+    const DOCTOR_ID = (window.DOCTOR_ID) || document.body.getAttribute('data-doctor-id');
+
+    // ===== API =====
+    const API = {
+        citasDelDia: (doctorId, fechaISO) => `/citas/dia?doctorId=${encodeURIComponent(doctorId)}&fecha=${encodeURIComponent(fechaISO)}`,
+        crearCita: `/citas`,
+        cancelarCita: (id) => `/citas/${id}/cancelar`,
+        especialidades: (doctorId) => `/doctor/${encodeURIComponent(doctorId)}/especialidades.json`,
+        pacientesPrim: () => `/pacientes`,
+        pacientesAlt:  (doctorId) => `/pacientes?doctorId=${encodeURIComponent(doctorId)}`,
+        registrarAtencion: `/historiales/registrar`
+    };
+
+    const state = {
+        today: new Date(),
+        viewYear: new Date().getFullYear(),
+        viewMonth: new Date().getMonth(),
+        selectedDate: new Date(),
+        pacientes: [],
+        especialidades: [],
+        citasUltimoFetch: [] // para abrir modal con datos de la cita
+    };
+
+    let horasOcupadas = new Set();        // Ocupadas del día seleccionado (lista)
+    let horasOcupadasModal = null;        // Ocupadas para la fecha del modal (puede cambiar dentro del modal)
+
+    // ===== Utils =====
+    const pad = (n) => String(n).padStart(2,'0');
+    const fmtISODate = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const parseLocalDate = (yyyy_mm_dd) => { const [y,m,d] = yyyy_mm_dd.split('-').map(Number); return new Date(y, m-1, d); };
+
+    // ===== Calendario =====
+    function renderCalendar() {
+        const cont = document.getElementById('days');
+        cont.innerHTML = '';
+        const year = state.viewYear, month = state.viewMonth;
+        const first = new Date(year, month, 1);
+        const startDow = (first.getDay() + 6) % 7;
+        const daysInMonth = new Date(year, month+1, 0).getDate();
+        const prevMonthDays = new Date(year, month, 0).getDate();
+        const totalCells = 42;
+        const monthLabel = first.toLocaleString('es-ES', { month:'long', year:'numeric' });
+        document.getElementById('monthLabel').textContent = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+        for (let i=0;i<totalCells;i++) {
+            const cell = document.createElement('div');
+            cell.className = 'day';
+            let dayNum, dateObj, muted=false;
+            if (i < startDow) { dayNum = prevMonthDays - startDow + i + 1; dateObj = new Date(year, month-1, dayNum); muted=true; }
+            else if (i >= startDow + daysInMonth) { dayNum = i - (startDow + daysInMonth) + 1; dateObj = new Date(year, month+1, dayNum); muted=true; }
+            else { dayNum = i - startDow + 1; dateObj = new Date(year, month, dayNum); }
+            if (muted) cell.classList.add('muted');
+            const isSelected = fmtISODate(dateObj) === fmtISODate(state.selectedDate);
+            if (isSelected) cell.classList.add('selected');
+            cell.textContent = dayNum;
+            cell.title = dateObj.toLocaleDateString('es-CR');
+            cell.addEventListener('click', () => {
+                state.selectedDate = dateObj;
+                document.getElementById('pickerFecha').value = fmtISODate(dateObj);
+                setLabels();
+                renderCalendar();
+                cargarCitasDelDia();
+            });
+            cont.appendChild(cell);
+        }
+    }
+
+    function setLabels() {
+        const labelFecha = document.getElementById('labelFecha');
+        labelFecha.textContent = state.selectedDate.toLocaleDateString('es-CR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+        document.getElementById('pickerFecha').value = fmtISODate(state.selectedDate);
+    }
+
+    // ===== Data loaders =====
+    async function fetchJsonTry(urls) {
+        for (const u of urls) {
+            try { const r = await fetch(u); if (r.ok) return await r.json(); } catch(e) {}
+        }
+        throw new Error('No se pudo obtener datos desde: ' + urls.join(', '));
+    }
+
+    function mapPaciente(p) {
+        const id = p.idPaciente ?? p.id ?? p.pacienteId ?? p.paciente_id ?? null;
+        const nombre = p.nombre ?? p.firstName ?? p.nombres ?? p.nombreCompleto ?? '';
+        const apellido = p.apellido ?? p.apellidos ?? p.lastName ?? p.primerApellido ?? p.segundoApellido ?? '';
+        const labelId = (id != null ? `${id}` : '');
+        const labelNom = `${apellido ? (apellido + ', ') : ''}${nombre}`.trim();
+        const label = `${labelId}${labelId && labelNom ? ' – ' : ''}${labelNom || 'Paciente'}`;
+        return { id, nombre, apellido, label };
+    }
+
+    function mapEspecialidad(e) {
+        const id = e.idEspecialidad ?? e.id ?? null;
+        const nombre = e.nomEspecialidad ?? e.nombre ?? 'Especialidad';
+        return { id, nombre };
+    }
+
+    async function cargarPacientes() {
+        try {
+            const data = await fetchJsonTry([API.pacientesPrim(), API.pacientesAlt(DOCTOR_ID)]);
+            const list =
+                Array.isArray(data) ? data :
+                    Array.isArray(data?.content) ? data.content :
+                        Array.isArray(data?.items) ? data.items :
+                            Array.isArray(data?.data) ? data.data : [];
+            state.pacientes = list.map(mapPaciente).filter(x => x.id != null);
+        } catch (err) {
+            console.error('Error cargando pacientes:', err);
+            state.pacientes = [];
+        }
+        pintarSelectPacientes();
+    }
+
+    async function cargarEspecialidades() {
+        const url = API.especialidades(DOCTOR_ID);
+        try {
+            const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!r.ok) throw new Error(`HTTP ${r.status} al cargar especialidades: ${url}`);
+            const data = await r.json();
+            state.especialidades = (Array.isArray(data) ? data : []).map(mapEspecialidad).filter(x => x.id != null);
+        } catch (err) {
+            console.error('Error cargando especialidades:', err);
+            state.especialidades = [];
+        }
+        pintarSelectEspecialidades();
+    }
+
+    function pintarSelectPacientes() {
+        const sel = document.getElementById('nc_paciente');
+        if (!state.pacientes.length) {
+            sel.innerHTML = '<option value="">No hay pacientes</option>';
+            return;
+        }
+        sel.innerHTML = '<option value="">Seleccione…</option>' +
+            state.pacientes
+                .filter(p => p.id != null)
+                .sort((a,b)=> (a.apellido || '').localeCompare(b.apellido || '', 'es', {sensitivity:'base'}))
+                .map(p => `<option value="${p.id}">${p.label}</option>`)
+                .join('');
+    }
+
+    function pintarSelectEspecialidades() {
+        const sel = document.getElementById('nc_especialidad');
+        if (!state.especialidades.length) {
+            sel.innerHTML = '<option value="">No hay especialidades</option>';
+            return;
+        }
+        sel.innerHTML = '<option value="">Seleccione…</option>' +
+            state.especialidades
+                .sort((a,b)=> a.nombre.localeCompare(b.nombre, 'es', {sensitivity:'base'}))
+                .map(e => `<option value="${e.id}">${e.nombre}</option>`)
+                .join('');
+    }
+
+    // ===== Citas del día =====
+    async function cargarCitasDelDia() {
+        const lista = document.getElementById('lista');
+        lista.innerHTML = '<div class="muted">Cargando…</div>';
+        if (!DOCTOR_ID) { lista.innerHTML = '<div class="muted">Falta el ID del doctor.</div>'; return; }
+        const fecha = fmtISODate(state.selectedDate);
+        try {
+            const res = await fetch(API.citasDelDia(DOCTOR_ID, fecha));
+            const citas = await res.json();
+            state.citasUltimoFetch = Array.isArray(citas) ? citas : [];
+            renderLista(state.citasUltimoFetch);
+        } catch (e) {
+            console.error(e);
+            lista.innerHTML = '<div class="muted">No se pudo cargar.</div>';
+        }
+    }
+
+    function renderLista(citas) {
+        const lista = document.getElementById('lista');
+
+        const programadas = (citas || []).filter(c => (c.estado || 'PROGRAMADA') === 'PROGRAMADA');
+        const atendidas   = (citas || []).filter(c => c.estado === 'ATENDIDA');
+        const canceladas  = (citas || []).filter(c => c.estado === 'CANCELADA');
+
+        horasOcupadas = new Set(
+            (programadas || [])
+                .map(c => new Date(c.fechaHora))
+                .map(d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`)
+        );
+
+        const byTime = (a,b) => new Date(a.fechaHora) - new Date(b.fechaHora);
+        programadas.sort(byTime); atendidas.sort(byTime); canceladas.sort(byTime);
+
+        document.getElementById('labelResumen').textContent = `${programadas.length} cita(s)`;
+
+        const fmt = (iso) => {
+            const d = new Date(iso); const hh = String(d.getHours()).padStart(2,'0'); const mm = String(d.getMinutes()).padStart(2,'0');
+            return `${hh}:${mm}`;
+        };
+        const pac = (c) => c.paciente?.nombre || c.pacienteNombre || (`Paciente ${c.paciente?.idPaciente ?? c.pacienteId ?? ''}`);
+        const esp = (c) => c.especialidad?.nomEspecialidad || c.especialidad?.nombre || null;
+
+        const itemHtml = (c, acciones) => `
+      <div class="item">
+        <div class="left">
+          <div><strong>${fmt(c.fechaHora)}</strong> — ${pac(c)} ${esp(c) ? `<span class="muted">· ${esp(c)}</span>` : ''}</div>
+          <div class="muted">Motivo: ${c.motivo ?? '—'}</div>
+        </div>
+        ${acciones || ''}
+      </div>
+    `;
+
+        // Lista principal: PROGRAMADAS
+        if (!programadas.length) {
+            lista.innerHTML = '<div class="muted">No hay citas.</div>';
+        } else {
+            lista.innerHTML = programadas.map(c => {
+                const acciones = `
+          <div style="display:flex; gap:.5rem">
+            <button class="btn ok" data-aten="${c.idCita ?? c.id}">Atender</button>
+            <button class="btn danger" data-cancel="${c.idCita ?? c.id}">Cancelar</button>
+          </div>`;
+                return itemHtml(c, acciones);
+            }).join('');
+        }
+
+        // Secciones colapsables: ATENDIDAS y CANCELADAS
+        const seccion = (titulo, count, id, arr) => `
+      <div class="section" id="${id}">
+        <header>
+          <div><strong>${titulo}</strong> <span class="badge-pill">${count}</span></div>
+          <div class="muted">Mostrar/ocultar</div>
+        </header>
+        <div class="section-content">
+          ${arr.length ? arr.map(c => itemHtml(c, '')).join('') : '<div class="muted">Vacío.</div>'}
+        </div>
+      </div>
+    `;
+        const cont = document.createElement('div');
+        cont.innerHTML =
+            seccion('Citas atendidas', atendidas.length, 'sec-atendidas', atendidas) +
+            seccion('Citas canceladas', canceladas.length, 'sec-canceladas', canceladas);
+        lista.appendChild(cont);
+
+        ['sec-atendidas','sec-canceladas'].forEach(secId => {
+            const sec = lista.querySelector('#'+secId);
+            if (!sec) return;
+            sec.querySelector('header').addEventListener('click', () => {
+                sec.classList.toggle('open');
+            });
+        });
+
+        // Acciones
+        lista.querySelectorAll('button[data-cancel]').forEach(btn =>
+            btn.addEventListener('click', async (ev) => {
+                const id = ev.currentTarget.getAttribute('data-cancel');
+                if (!confirm('¿Cancelar esta cita?')) return;
+                const r = await fetch(API.cancelarCita(id), { method:'PATCH' });
+                if (!r.ok) { alert('No se pudo cancelar la cita.'); return; }
+                cargarCitasDelDia();
+            })
+        );
+
+        // Atender: abre modal (NO PATCH directo)
+        lista.querySelectorAll('button[data-aten]').forEach(btn =>
+            btn.addEventListener('click', (ev) => {
+                const id = ev.currentTarget.getAttribute('data-aten');
+                const cita = (state.citasUltimoFetch || []).find(x => String(x.idCita ?? x.id) === String(id));
+                if (!cita) return;
+                openAtenderModal(cita);
+            })
+        );
+    }
+
+    // ===== Crear cita =====
+    function setDlgError(msg){
+        const box = document.getElementById('dlgError');
+        if (!box) return;
+        box.textContent = msg;
+        box.style.display = msg ? 'block' : 'none';
+    }
+    function clearDlgError(){ setDlgError(''); }
+
+    async function buildHorasOcupadasFor(fechaISO){
+        try{
+            const r = await fetch(API.citasDelDia(DOCTOR_ID, fechaISO));
+            const citas = await r.json();
+            const programadas = (Array.isArray(citas) ? citas : []).filter(c => (c.estado || 'PROGRAMADA') === 'PROGRAMADA');
+            return new Set(programadas
+                .map(c => new Date(c.fechaHora))
+                .map(d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`));
+        }catch(e){
+            console.warn('No se pudo obtener horas ocupadas para', fechaISO, e);
+            return new Set();
+        }
+    }
+
+    function validateHoraLibre(){
+        const horaEl = document.getElementById('nc_hora');
+        const fechaEl = document.getElementById('nc_fecha');
+        const hora = horaEl.value;
+        const ocupadas = horasOcupadasModal || horasOcupadas;
+        const ocupada = hora && ocupadas.has(hora);
+        if (ocupada){
+            setDlgError(`La hora ${hora} ya está ocupada. Por favor selecciona otra.`);
+            horaEl.classList.add('invalid');
+            return false;
+        } else {
+            clearDlgError();
+            horaEl.classList.remove('invalid');
+            return true;
+        }
+    }
+
+    async function crearCita() {
+        if (!DOCTOR_ID) { alert('No se pudo resolver el ID del doctor.'); return; }
+        const fecha = document.getElementById('nc_fecha').value;
+        const hora = document.getElementById('nc_hora').value;
+        const pacienteId = document.getElementById('nc_paciente').value;
+        const especialidadId = document.getElementById('nc_especialidad').value;
+        const motivo = document.getElementById('nc_motivo').value || null;
+
+        if (!fecha || !hora || !pacienteId || !especialidadId) {
+            alert('Complete fecha, hora, paciente y especialidad.');
+            return;
+        }
+
+        // ✅ Verificar si la hora está ocupada (usa el set del modal si existe)
+        if ((horasOcupadasModal || horasOcupadas).has(hora)) {
+            setDlgError(`La hora ${hora} ya está ocupada. Por favor selecciona otra.`);
+            document.getElementById('nc_hora').classList.add('invalid');
+            return;
+        }
+
+        const payload = {
+            fecha, hora, motivo,
+            pacienteId: Number(pacienteId),
+            doctorId: Number(DOCTOR_ID),
+            especialidadId: Number(especialidadId)
+        };
+
+        const res = await fetch(API.crearCita, {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            let detalle = '';
+            try { detalle = await res.json(); } catch { detalle = await res.text().catch(()=> ''); }
+
+            // Normaliza respuesta
+            const codigo   = (detalle && detalle.codigo)   || '';
+            const mensaje  = (detalle && detalle.mensaje)  || 'No se pudo crear la cita.';
+
+            // Mensajes bonitos por código
+            if (res.status === 409 && codigo === 'HORARIO_ATENDIDO') {
+                setDlgError('Ya se atendió una cita a esta hora. Por favor elige otra hora.');
+                document.getElementById('nc_hora').classList.add('invalid');
+                return;
+            }
+            if (res.status === 409 && codigo === 'HORARIO_OCUPADO') {
+                setDlgError('Ese horario ya está ocupado por otra cita activa. Elige otra hora.');
+                document.getElementById('nc_hora').classList.add('invalid');
+                return;
+            }
+
+            // Fallback (otros errores)
+            setDlgError(mensaje);
+            document.getElementById('nc_hora').classList.add('invalid');
+            return;
+        }
+
+        document.getElementById('dlgNueva').close();
+        if (fecha === fmtISODate(state.selectedDate)) await cargarCitasDelDia();
+        renderCalendar();
+    }
+
+    // ===== Modal Atender =====
+    const dlgAt = document.getElementById('dlgAtender');
+    const recetasBox = document.getElementById('recetasBox');
+    const recetasList = document.getElementById('recetasList');
+
+    function recetaItem(idx) {
+        return `
+      <div class="item" data-receta="${idx}">
+        <div class="left" style="width:100%; gap:.4rem">
+          <input class="rec_med" placeholder="Medicamento" required />
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:.5rem;">
+            <input class="rec_dosis" placeholder="Dosis" required />
+            <input class="rec_frec"  placeholder="Frecuencia" />
+            <input class="rec_dura"  type="number" min="1" placeholder="Duración (días)" />
+            <span class="muted" style="align-self:center;">&nbsp;</span>
+          </div>
+        </div>
+        <div>
+          <button type="button" class="btn danger rec_del">Eliminar</button>
+        </div>
+      </div>`;
+    }
+
+    function openAtenderModal(cita) {
+        document.getElementById('at_citaId').value = cita.idCita ?? cita.id;
+        const when = new Date(cita.fechaHora).toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'});
+        const who  = cita.paciente?.nombre || ('Paciente ' + (cita.paciente?.idPaciente ?? ''));
+        const esp  = cita.especialidad?.nomEspecialidad || cita.especialidad?.nombre || '';
+        document.getElementById('at_info').textContent = `${when} — ${who}${esp? ' · ' + esp : ''}`;
+        document.getElementById('at_diag').value = '';
+        document.getElementById('at_trat').value = '';
+        document.getElementById('at_hasReceta').checked = false;
+        recetasBox.style.display = 'none';
+        recetasList.innerHTML = '';
+        dlgAt.showModal();
+    }
+
+    document.getElementById('at_hasReceta').addEventListener('change', (e) => {
+        recetasBox.style.display = e.target.checked ? 'block' : 'none';
+        if (e.target.checked && !recetasList.children.length) {
+            recetasList.insertAdjacentHTML('beforeend', recetaItem(0));
+        }
+    });
+    document.getElementById('btnAddReceta').addEventListener('click', () => {
+        recetasList.insertAdjacentHTML('beforeend', recetaItem(recetasList.children.length));
+    });
+    recetasList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('rec_del')) e.target.closest('[data-receta]').remove();
+    });
+    document.getElementById('dlgAtClose').addEventListener('click', () => dlgAt.close());
+    document.getElementById('dlgAtCancel').addEventListener('click', () => dlgAt.close());
+
+    document.getElementById('dlgAtSave').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const citaId = Number(document.getElementById('at_citaId').value);
+        const diagnostico = document.getElementById('at_diag').value.trim();
+        const tratamiento = document.getElementById('at_trat').value.trim();
+        if (!diagnostico || !tratamiento) { alert('Diagnóstico y Tratamiento son obligatorios.'); return; }
+
+        let recetas = [];
+        if (document.getElementById('at_hasReceta').checked) {
+            recetas = Array.from(recetasList.querySelectorAll('[data-receta]')).map(row => ({
+                medicamento: row.querySelector('.rec_med').value.trim(),
+                dosis:       row.querySelector('.rec_dosis').value.trim(),
+                frecuencia:  row.querySelector('.rec_frec').value.trim() || null,
+                duracion:    (row.querySelector('.rec_dura').value ? parseInt(row.querySelector('.rec_dura').value, 10) : null)
+            })).filter(r => r.medicamento && r.dosis);
+        }
+
+        const payload = { citaId, diagnostico, tratamiento, recetas };
+        const r = await fetch(API.registrarAtencion, {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!r.ok) {
+            const t = await r.text().catch(()=> '');
+            alert('No se pudo registrar la atención.\n' + t);
+            return;
+        }
+        dlgAt.close();
+        cargarCitasDelDia(); // se moverá a “Atendidas”
+    });
+
+    // ===== Eventos UI =====
+    document.getElementById('prevMonth').addEventListener('click', () => {
+        const d = new Date(state.viewYear, state.viewMonth - 1, 1);
+        state.viewYear = d.getFullYear(); state.viewMonth = d.getMonth();
+        renderCalendar();
+    });
+    document.getElementById('nextMonth').addEventListener('click', () => {
+        const d = new Date(state.viewYear, state.viewMonth + 1, 1);
+        state.viewYear = d.getFullYear(); state.viewMonth = d.getMonth();
+        renderCalendar();
+    });
+    document.getElementById('pickerFecha').addEventListener('change', (e) => {
+        state.selectedDate = parseLocalDate(e.target.value);
+        setLabels();
+        renderCalendar();
+        cargarCitasDelDia();
+    });
+    document.getElementById('btnRefrescar').addEventListener('click', cargarCitasDelDia);
+
+    // Modal nueva cita
+    const dlg = document.getElementById('dlgNueva');
+    document.getElementById('btnNueva').addEventListener('click', async () => {
+        dlg.showModal();
+        document.getElementById('nc_fecha').value = fmtISODate(state.selectedDate);
+        document.getElementById('nc_hora').value = '';
+        document.getElementById('nc_hora').classList.remove('invalid');
+        document.getElementById('nc_motivo').value = '';
+        clearDlgError();
+
+        // Cargar selects y horas ocupadas del día inicial del modal
+        await Promise.all([cargarPacientes(), cargarEspecialidades()]);
+        horasOcupadasModal = new Set(horasOcupadas); // por defecto, el día seleccionado en la lista
+
+        // Listeners de validación en vivo
+        document.getElementById('nc_hora').addEventListener('input', validateHoraLibre, { once:false });
+        document.getElementById('nc_fecha').addEventListener('change', async (ev) => {
+            const nuevaFecha = ev.target.value;
+            horasOcupadasModal = await buildHorasOcupadasFor(nuevaFecha);
+            // re-validar la hora ya digitada (si hay)
+            validateHoraLibre();
+        }, { once:false });
+    });
+    document.getElementById('dlgClose').addEventListener('click', () => dlg.close());
+    document.getElementById('dlgCancel').addEventListener('click', () => dlg.close());
+    document.getElementById('dlgCreate').addEventListener('click', (e) => { e.preventDefault(); crearCita(); });
+
+    // Init
+    (async function init() {
+        if (!DOCTOR_ID) console.warn('Falta DOCTOR_ID. Define data-doctor-id en <body>.');
+        setLabels();
+        renderCalendar();
+        await cargarCitasDelDia();
+    })();
+    document.getElementById('nc_hora').addEventListener('input', () => {
+        clearDlgError();
+        document.getElementById('nc_hora').classList.remove('invalid');
+    });
+
+</script>
+<!-- FAB Menú principal -->
+<a class="fab-home" th:href="@{/}">🏠 Menú principal</a>
+
+</body>
+</html>

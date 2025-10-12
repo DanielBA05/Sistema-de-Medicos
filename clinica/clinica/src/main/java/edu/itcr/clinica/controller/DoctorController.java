@@ -5,6 +5,7 @@ import edu.itcr.clinica.model.Especialidad;
 import edu.itcr.clinica.repository.DoctorRepository;
 import edu.itcr.clinica.repository.EspecialidadRepository;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -25,26 +26,28 @@ public class DoctorController {
         this.espRepo = espRepo;
     }
 
-    // NUNCA static
+    // Redirige al primer doctor existente (sistema de un solo doctor)
     @GetMapping
     public String root() {
         Long id = doctorRepo.findAll().stream()
                 .map(Doctor::getIdDoctor)
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No hay doctores"));
+                .orElseThrow(() -> new RuntimeException("No hay doctores registrados"));
         return "redirect:/doctor/" + id;
     }
 
     @GetMapping("/{id}")
     public String ver(@PathVariable Long id, Model model) {
-        Doctor d = doctorRepo.findById(id).orElseThrow(() -> new RuntimeException("Doctor no encontrado"));
+        Doctor d = doctorRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
         model.addAttribute("doctor", d);
         return "doctor"; // templates/doctor.html
     }
 
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
-        Doctor d = doctorRepo.findById(id).orElseThrow(() -> new RuntimeException("Doctor no encontrado"));
+        Doctor d = doctorRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
         model.addAttribute("doctor", d);
         return "doctor_form"; // templates/doctor_form.html
     }
@@ -52,20 +55,21 @@ public class DoctorController {
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute("doctor") Doctor form) {
         Doctor d = doctorRepo.findById(form.getIdDoctor())
-                .orElseThrow(() -> new RuntimeException("Doctor no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + form.getIdDoctor()));
         d.setNombre(form.getNombre());
         d.setApellido(form.getApellido());
         d.setTelefono(form.getTelefono());
         d.setDireccion(form.getDireccion());
-        doctorRepo.save(d); // <-- instancia, no estático
+        doctorRepo.save(d);
         return "redirect:/doctor/" + d.getIdDoctor();
     }
 
-    // ---------- Gestionar especialidades ----------
+    // ---------- Gestionar especialidades (vistas) ----------
     @GetMapping("/especialidades/{id}")
     public String editarEspecialidades(@PathVariable Long id, Model model) {
-        Doctor d = doctorRepo.findById(id).orElseThrow(() -> new RuntimeException("Doctor no encontrado"));
-        List<Especialidad> todas = espRepo.findAll(); // <-- instancia
+        Doctor d = doctorRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
+        List<Especialidad> todas = espRepo.findAll();
 
         Set<Long> actuales = d.getEspecialidades().stream()
                 .map(Especialidad::getIdEspecialidad)
@@ -74,27 +78,28 @@ public class DoctorController {
         model.addAttribute("doctor", d);
         model.addAttribute("todasEspecialidades", todas);
         model.addAttribute("idsActuales", actuales);
-        return "doctor_especialidades_form"; // asegúrate del archivo
+        return "doctor_especialidades_form";
     }
 
     @PostMapping("/especialidades/{id}")
     public String guardarEspecialidades(@PathVariable Long id,
                                         @RequestParam(name = "especialidadesIds", required = false) List<Long> especialidadesIds,
                                         RedirectAttributes ra) {
-        Doctor d = doctorRepo.findById(id).orElseThrow(() -> new RuntimeException("Doctor no encontrado"));
+        Doctor d = doctorRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
 
         Set<Especialidad> nuevas = new HashSet<>();
         if (!CollectionUtils.isEmpty(especialidadesIds)) {
-            nuevas.addAll(espRepo.findAllById(especialidadesIds)); // <-- instancia
+            nuevas.addAll(espRepo.findAllById(especialidadesIds));
         }
         d.setEspecialidades(nuevas);
-        doctorRepo.save(d); // <-- instancia
+        doctorRepo.save(d);
 
         ra.addFlashAttribute("ok", "Especialidades actualizadas correctamente.");
         return "redirect:/doctor/" + id;
     }
 
-    // opcional: crear especialidad “al vuelo”
+    // Crear especialidad “al vuelo” desde el formulario de especialidades
     @PostMapping("/especialidades/{id}/crear")
     public String crearEspecialidad(@PathVariable Long id,
                                     @RequestParam("nombre") String nombre,
@@ -105,11 +110,27 @@ public class DoctorController {
             return "redirect:/doctor/especialidades/" + id;
         }
 
-        // Optional<Especialidad> findByNomEspecialidadIgnoreCase(String nomEspecialidad);
         espRepo.findByNomEspecialidadIgnoreCase(clean)
                 .orElseGet(() -> espRepo.save(new Especialidad(clean)));
 
         ra.addFlashAttribute("okEsp", "Especialidad creada / disponible.");
         return "redirect:/doctor/especialidades/" + id;
     }
+
+    @GetMapping(value = "/{id}/especialidades.json")
+    @ResponseBody
+    public List<EspecialidadDto> especialidadesJson(@PathVariable Long id) {
+        var list = espRepo.findByDoctores_IdDoctor(id);
+        return list.stream()
+                .sorted(java.util.Comparator.comparing(
+                        edu.itcr.clinica.model.Especialidad::getNomEspecialidad,
+                        java.text.Collator.getInstance(new java.util.Locale("es","CR"))
+                ))
+                .map(e -> new EspecialidadDto(e.getIdEspecialidad(), e.getNomEspecialidad()))
+                .toList();
+    }
+
+
+    // DTO ligero para JSON (sin ciclos ni campos innecesarios)
+    public record EspecialidadDto(Long idEspecialidad, String nombre) {}
 }

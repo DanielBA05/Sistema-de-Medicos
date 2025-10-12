@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "doctor", schema = "clinica")
@@ -33,6 +34,7 @@ public class Doctor {
             joinColumns = @JoinColumn(name = "id_doctor"),
             inverseJoinColumns = @JoinColumn(name = "id_especialidad")
     )
+    @JsonIgnore
     private Set<Especialidad> especialidades = new HashSet<>();
 
 

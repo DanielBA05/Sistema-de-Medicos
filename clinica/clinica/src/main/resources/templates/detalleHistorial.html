@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${'Historial de ' + (paciente.nombre?:'') + ' ' + (paciente.apellido?:'')}">Historial</title>
+    <style>
+        body { font-family: Arial, sans-serif; background:#f2f7ff; margin:0; }
+        header { background:#0077b6; color:#fff; padding:16px 24px; }
+        main { padding:24px; max-width:1100px; margin:0 auto; display:grid; gap:24px; }
+        .card { background:#fff; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,.06); padding:16px 20px; }
+        .card h3 { margin:0 0 8px 0; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { padding:10px 12px; border-bottom:1px solid #eef2f7; text-align:left; }
+        th { background:#e6f2fb; }
+        a { color:#fff; text-decoration:none; }
+        .breadcrumbs { margin-top:8px; }
+        .back { color:#ffffff; text-decoration:underline; }
+        .muted { color:#64748b; }
+        .pill { display:inline-block; padding:2px 8px; border-radius:12px; background:#eef6ff; color:#1f3b73; font-size:12px; }
+
+        /* FAB Menú principal */
+        .fab-home{
+            position:fixed; right:20px; bottom:20px;
+            background:#0077b6; color:#fff; border-radius:999px;
+            padding:12px 16px; text-decoration:none;
+            box-shadow:0 6px 16px rgba(0,0,0,.15); z-index:1000;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2 th:text="${(paciente.apellido?:'') + ', ' + (paciente.nombre?:'')}">Paciente</h2>
+        <a class="back" th:href="@{/historiales/vista}">← Volver a pacientes</a>
+    </div>
+    <div class="breadcrumbs">
+        <span class="pill" th:text="${'ID: ' + (paciente.idPaciente)}">ID: 1</span>
+    </div>
+</header>
+
+<main>
+    <div class="card">
+        <h3>Datos del paciente</h3>
+        <p><b>Correo:</b> <span th:text="${paciente.correo?:'—'}">—</span></p>
+        <p><b>Teléfono:</b> <span th:text="${paciente.telefono?:'—'}">—</span></p>
+        <p><b>Fecha de nacimiento:</b>
+            <span th:text="${paciente.fechaNacimiento != null ? #temporals.format(paciente.fechaNacimiento, 'dd/MM/yyyy') : '—'}">—</span>
+        </p>
+        <p><b>Dirección:</b> <span th:text="${paciente.direccion?:'—'}">—</span></p>
+        <p><b>Sexo:</b> <span th:text="${paciente.sexo?:'—'}">—</span></p>
+    </div>
+
+    <div class="card">
+        <h3>🩺 Atenciones y recetas</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Diagnóstico</th>
+                <th>Tratamiento</th>
+                <th>Recetas</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="h : ${historiales}">
+                <td th:text="${h.fechaConsulta != null ? #temporals.format(h.fechaConsulta, 'dd/MM/yyyy') : '—'}">—</td>
+                <td th:text="${h.diagnostico?:'—'}">—</td>
+                <td th:text="${h.tratamiento?:'—'}">—</td>
+                <td>
+                    <div th:if="${h.recetas != null and !#lists.isEmpty(h.recetas)}">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Medicamento</th>
+                                <th>Dosis</th>
+                                <th>Frecuencia</th>
+                                <th>Duración</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="r : ${h.recetas}">
+                                <td th:text="${r.medicamento?:'—'}">—</td>
+                                <td th:text="${r.dosis?:'—'}">—</td>
+                                <td th:text="${r.frecuencia?:'—'}">—</td>
+                                <td th:text="${r.duracion != null ? r.duracion + ' días' : '—'}">—</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <span class="muted" th:if="${h.recetas == null or #lists.isEmpty(h.recetas)}">Sin recetas</span>
+                </td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(historiales)}">
+                <td colspan="4">Sin atenciones registradas para este paciente.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- FAB Menú principal -->
+<a class="fab-home" th:href="@{/}">🏠 Menú principal</a>
+
+</body>
+</html>

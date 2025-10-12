@@ -7,6 +7,13 @@
         header{background:#0077b6;color:#fff;text-align:center;padding:16px}
         .wrap{max-width:800px;margin:24px auto;background:#fff;padding:24px;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
         a.btn{display:inline-block;margin-right:10px;text-decoration:none;background:#0077b6;color:#fff;padding:8px 12px;border-radius:8px}
+        .btn { text-decoration: none; color: #111;}
+        .fab-home{
+            position:fixed; right:20px; bottom:20px;
+            background:#0077b6; color:#fff; border-radius:999px;
+            padding:12px 16px; text-decoration:none;
+            box-shadow:0 6px 16px rgba(0,0,0,.15); z-index:1000;
+        }
     </style>
 </head>
 <body>
@@ -30,5 +37,6 @@
         <a th:href="@{/}" class="btn" style="background:#6c757d">Volver</a>
     </div>
 </div>
+<a class="fab-home" th:href="@{/}">🏠 Menú principal</a>
 </body>
 </html>

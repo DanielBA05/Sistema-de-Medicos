@@ -15,7 +15,7 @@
         label { display: block; margin: 8px 0; font-weight: bold; }
         input[type="text"] { width: 100%; padding: 10px; border: 1px solid #e3e6eb; border-radius: 10px; }
         .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
-        .btn { display: inline-block; padding: 10px 14px; border-radius: 10px; border: none; background: var(--primary); color: #fff; text-decoration: none; cursor: pointer; }
+        .btn { display: inline-block; padding: 10px 14px; border-radius: 10px; border: none; background: var(--primary); color: #fff; text-decoration: none; cursor: pointer;  }
         .btn.muted { background: var(--muted); }
         .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
         .chip { background:#e3f2fd; color:#0b4a6f; padding: 6px 10px; border-radius: 999px; font-size: .9rem; }
@@ -26,6 +26,12 @@
         .checkbox-list { list-style: none; padding: 0; margin-top: 8px; }
         .checkbox-list li { margin-bottom: 6px; }
         .checkbox-list input[type="checkbox"] { margin-right: 8px; }
+        .fab-home{
+            position:fixed; right:20px; bottom:20px;
+            background:#0077b6; color:#fff; border-radius:999px;
+            padding:12px 16px; text-decoration:none;
+            box-shadow:0 6px 16px rgba(0,0,0,.15); z-index:1000;
+        }
     </style>
 </head>
 <body>
@@ -85,6 +91,7 @@
         </div>
     </form>
 </div>
+<a class="fab-home" th:href="@{/}">🏠 Menú principal</a>
 
 </body>
 </html>

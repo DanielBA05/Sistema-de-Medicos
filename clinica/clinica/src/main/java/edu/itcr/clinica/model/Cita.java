@@ -1,11 +1,18 @@
 package edu.itcr.clinica.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cita", schema = "clinica")
 public class Cita {
+
+    public enum CitaEstado {
+        PROGRAMADA,
+        CANCELADA,
+        ATENDIDA
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +31,17 @@ public class Cita {
 
     @ManyToOne
     @JoinColumn(name = "id_doctor", nullable = false)
+    @JsonIgnoreProperties({ "especialidades", "hibernateLazyInitializer" })
     private Doctor doctor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_especialidad")
+    @JsonIgnoreProperties({ "doctores", "hibernateLazyInitializer" })
+    private Especialidad especialidad;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false, length = 20)
+    private CitaEstado estado = CitaEstado.PROGRAMADA;
 
     public Long getIdCita() { return idCita; }
     public void setIdCita(Long idCita) { this.idCita = idCita; }
@@ -40,4 +57,10 @@ public class Cita {
 
     public Doctor getDoctor() { return doctor; }
     public void setDoctor(Doctor doctor) { this.doctor = doctor; }
+
+    public CitaEstado getEstado() { return estado; }
+    public void setEstado(CitaEstado estado) { this.estado = estado; }
+
+    public Especialidad getEspecialidad() { return especialidad; }
+    public void setEspecialidad(Especialidad especialidad) { this.especialidad = especialidad; }
 }

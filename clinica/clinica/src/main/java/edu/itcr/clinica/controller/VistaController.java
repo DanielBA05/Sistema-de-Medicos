@@ -9,8 +9,8 @@ public class VistaController {
 
 
 
-    @GetMapping("/pacientes/vista")
-    public String pacientes() { return "pacientes"; }
+    /*@GetMapping("/pacientes/vista")
+    public String pacientes() { return "pacientes"; }*/
 
     @GetMapping("/citas/vista")
     public String citas() { return "citas"; }

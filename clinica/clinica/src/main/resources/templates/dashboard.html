@@ -4,13 +4,66 @@
     <meta charset="UTF-8">
     <title>Panel del Doctor</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f2f7ff; margin: 0; padding: 0; }
-        header { background: #0077b6; color: white; text-align: center; padding: 20px; }
-        main { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 40px; }
-        .card { background: white; width: 220px; height: 150px; text-align: center; padding: 20px;
-            border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .card:hover { transform: scale(1.05); }
-        a { text-decoration: none; color: #0077b6; font-weight: bold; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f2f7ff;
+        }
+
+        /* Encabezado */
+        header {
+            background: #0077b6;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Contenedor principal con fondo */
+        main {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 60px 40px;
+            background: url('/Others/fondo.jpg') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Capa semitransparente sobre la imagen (opcional para mejor lectura) */
+        main::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.85); /* ajusta la opacidad si quieres ver más la imagen */
+            z-index: 0;
+        }
+
+        /* Las tarjetas encima del fondo */
+        .card {
+            background: white;
+            width: 220px;
+            height: 150px;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            position: relative;
+            z-index: 1; /* importante: asegura que estén encima del overlay */
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+        a {
+            text-decoration: none;
+            color: #0077b6;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -42,9 +95,8 @@
 
     <div class="card">
         <h2>📋 Historial Médico</h2>
-        <a th:href="@{/historial/vista}">Consultar Historial</a>
+        <a th:href="@{/historiales/vista}">Consultar Historial</a>
     </div>
-
 </main>
 
 </body>
