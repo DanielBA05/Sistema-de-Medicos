@@ -42,7 +42,7 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/clinica_db
 spring.datasource.username=**tu_usuario**
 spring.datasource.password=**tu_contraseña**
 spring.jpa.hibernate.ddl-auto=none
-6. Busca la clase principal llamada; ClinicaApplication.java
+6. Busca la clase principal llamada: ClinicaApplication.java
 7. Haz clic en Run
 
 ## **Acceder al sistema**
