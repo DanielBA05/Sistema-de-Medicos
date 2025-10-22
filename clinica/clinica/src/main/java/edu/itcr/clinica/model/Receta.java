@@ -31,7 +31,7 @@ public class Receta {
     @JsonIgnoreProperties({ "cita", "recetas", "hibernateLazyInitializer" })
     private HistorialMedico historial;
 
-    // ===== Getters/Setters =====
+    //  Getters y Setters 
     public Long getIdReceta() { return idReceta; }
     public void setIdReceta(Long idReceta) { this.idReceta = idReceta; }
 
@@ -50,7 +50,7 @@ public class Receta {
     public HistorialMedico getHistorial() { return historial; }
     public void setHistorial(HistorialMedico historial) { this.historial = historial; }
 
-    // ===== equals/hashCode por id =====
+    // equals o hashCode por id
     @Override public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Receta)) return false;
