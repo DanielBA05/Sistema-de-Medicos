@@ -8,6 +8,10 @@ import java.util.List;
 
 @Repository
 public interface EspecialidadRepository extends JpaRepository<Especialidad, Long> {
+
+    // Buscar especialidad por nombre ignorando mayúsculas/minúsculas
     Optional<Especialidad> findByNomEspecialidadIgnoreCase(String nomEspecialidad);
+
+    // Obtener todas las especialidades de un doctor específico
     List<Especialidad> findByDoctores_IdDoctor(Long idDoctor);
 }
