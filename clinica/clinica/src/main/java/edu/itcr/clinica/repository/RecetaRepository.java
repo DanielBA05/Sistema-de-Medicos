@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RecetaRepository extends JpaRepository<Receta, Long> {
+    // Repositorio básico para operaciones CRUD sobre Receta
 }
