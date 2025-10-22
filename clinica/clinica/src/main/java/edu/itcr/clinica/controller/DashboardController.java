@@ -1,4 +1,3 @@
-// edu.itcr.clinica.controller.DashboardController
 package edu.itcr.clinica.controller;
 
 import edu.itcr.clinica.model.Doctor;
