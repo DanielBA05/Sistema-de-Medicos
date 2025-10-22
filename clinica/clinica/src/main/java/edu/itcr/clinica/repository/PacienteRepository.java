@@ -11,10 +11,10 @@ import java.util.List;
 @Repository
 public interface PacienteRepository extends JpaRepository<Paciente, Long> {
 
-    // Lista ordenada por apellido y nombre
+    //  para obtener todos los pacientes ordenados por apellido y nombre
     List<Paciente> findAllByOrderByApellidoAscNombreAsc();
 
-
+    // Busca pacientes por nombre o apellido (case-insensitive) y ordenar
     @Query("""
         SELECT p FROM Paciente p
         WHERE LOWER(p.nombre) LIKE LOWER(CONCAT('%', :q, '%'))
@@ -23,3 +23,4 @@ public interface PacienteRepository extends JpaRepository<Paciente, Long> {
     """)
     List<Paciente> searchByNombreOrApellido(@Param("q") String q);
 }
+
