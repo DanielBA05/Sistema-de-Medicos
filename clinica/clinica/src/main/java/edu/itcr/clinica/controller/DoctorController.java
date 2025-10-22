@@ -26,9 +26,10 @@ public class DoctorController {
         this.espRepo = espRepo;
     }
 
-    // Redirige al primer doctor existente 
+    // Redirige al primer doctor existente
     @GetMapping
     public String root() {
+        // Obtiene el primer ID disponible
         Long id = doctorRepo.findAll().stream()
                 .map(Doctor::getIdDoctor)
                 .findFirst()
@@ -41,19 +42,21 @@ public class DoctorController {
         Doctor d = doctorRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
         model.addAttribute("doctor", d);
-        return "doctor"; 
+        return "doctor";
     }
 
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
+        // Reutiliza el mismo patrón de búsqueda con error explícito
         Doctor d = doctorRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
         model.addAttribute("doctor", d);
-        return "doctor_form"; 
+        return "doctor_form";
     }
 
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute("doctor") Doctor form) {
+        // Evita sobreescrituras accidentales
         Doctor d = doctorRepo.findById(form.getIdDoctor())
                 .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + form.getIdDoctor()));
         d.setNombre(form.getNombre());
@@ -64,9 +67,10 @@ public class DoctorController {
         return "redirect:/doctor/" + d.getIdDoctor();
     }
 
-   
+
     @GetMapping("/especialidades/{id}")
     public String editarEspecialidades(@PathVariable Long id, Model model) {
+        // Carga del doctor y preparación de datos para checkboxes
         Doctor d = doctorRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
         List<Especialidad> todas = espRepo.findAll();
@@ -85,11 +89,13 @@ public class DoctorController {
     public String guardarEspecialidades(@PathVariable Long id,
                                         @RequestParam(name = "especialidadesIds", required = false) List<Long> especialidadesIds,
                                         RedirectAttributes ra) {
+        // Sincroniza el many-to-many: reemplaza el set del doctor con la selección actual
         Doctor d = doctorRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
 
         Set<Especialidad> nuevas = new HashSet<>();
         if (!CollectionUtils.isEmpty(especialidadesIds)) {
+            // Trae sólo las especialidades seleccionadas
             nuevas.addAll(espRepo.findAllById(especialidadesIds));
         }
         d.setEspecialidades(nuevas);
@@ -104,6 +110,7 @@ public class DoctorController {
     public String crearEspecialidad(@PathVariable Long id,
                                     @RequestParam("nombre") String nombre,
                                     RedirectAttributes ra) {
+        // Normaliza entrada y valida vacío para evitar registros inválidos
         String clean = nombre == null ? "" : nombre.trim();
         if (clean.isEmpty()) {
             ra.addFlashAttribute("errorEsp", "El nombre no puede estar vacío.");
@@ -130,7 +137,5 @@ public class DoctorController {
                 .toList();
     }
 
-
-    // DTO ligero para JSON (sin ciclos ni campos innecesarios)
     public record EspecialidadDto(Long idEspecialidad, String nombre) {}
 }

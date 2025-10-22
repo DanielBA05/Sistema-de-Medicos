@@ -36,6 +36,7 @@ public class CitaController {
         this.especialidadRepo = especialidadRepo;
     }
 
+    // DTO mínimo para crear
     public static class CrearCitaRequest {
         public String fecha;
         public String hora;
@@ -45,16 +46,12 @@ public class CitaController {
         public Long especialidadId;
     }
 
-    public static class ReprogramarCitaRequest {
-        public String fecha;
-        public String hora;
-    }
-
     @GetMapping("/dia")
     public List<Cita> listarPorDia(
             @RequestParam Long doctorId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha
     ) {
+        // Ventana del día completo para consultas por agenda
         LocalDateTime start = fecha.atStartOfDay();
         LocalDateTime end = fecha.atTime(LocalTime.MAX);
         return repo.findByDoctor_IdDoctorAndFechaHoraBetweenOrderByFechaHoraAsc(doctorId, start, end);
@@ -62,11 +59,13 @@ public class CitaController {
 
     @PostMapping
     public org.springframework.http.ResponseEntity<?> crear(@RequestBody CrearCitaRequest req) {
+        // Validación temprana de campos obligatorios
         if (req.doctorId == null || req.pacienteId == null || req.fecha == null || req.hora == null || req.especialidadId == null) {
             return org.springframework.http.ResponseEntity.badRequest()
                     .body(Map.of("ok", false, "mensaje", "doctorId, pacienteId, fecha, hora y especialidadId son obligatorios"));
         }
 
+        // Normaliza fecha/hora a LocalDateTime para consistencia
         LocalDateTime fechaHora = LocalDateTime.of(
                 LocalDate.parse(req.fecha), LocalTime.parse(req.hora));
 
@@ -77,6 +76,7 @@ public class CitaController {
         boolean programada = citasEnEseHorario.stream()
                 .anyMatch(c -> c.getEstado() == Cita.CitaEstado.PROGRAMADA);
 
+        // Si ya se atendió una cita, se bloquea para evitar duplicidad semántica
         if (atendida) {
             return org.springframework.http.ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of(
@@ -86,6 +86,7 @@ public class CitaController {
                     ));
         }
 
+        // Si hay una PROGRAMADA activa, se evita asignar cita a una hora ya ocupada
         if (programada) {
             return org.springframework.http.ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of(
@@ -95,6 +96,7 @@ public class CitaController {
                     ));
         }
 
+        // Mensajes claros de error
         Paciente paciente = pacienteRepo.findById(req.pacienteId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Paciente no existe: " + req.pacienteId));
 
@@ -104,6 +106,7 @@ public class CitaController {
         Especialidad especialidad = especialidadRepo.findById(req.especialidadId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Especialidad no existe: " + req.especialidadId));
 
+        // Construcción explícita del agregado Cita
         Cita c = new Cita();
         c.setFechaHora(fechaHora);
         c.setMotivo(req.motivo);
@@ -116,9 +119,9 @@ public class CitaController {
         return org.springframework.http.ResponseEntity.status(HttpStatus.CREATED).body(guardada);
     }
 
-
     @PatchMapping("/{id}/cancelar")
     public Cita cancelar(@PathVariable Long id) {
+        // Cambio de estado idempotente a CANCELADA
         Cita c = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada"));
         c.setEstado(Cita.CitaEstado.CANCELADA);
         return repo.save(c);
@@ -126,42 +129,22 @@ public class CitaController {
 
     @PatchMapping("/{id}/atender")
     public Cita atender(@PathVariable Long id) {
+        // Marca como ATENDIDA
         Cita c = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada"));
         c.setEstado(Cita.CitaEstado.ATENDIDA);
         return repo.save(c);
     }
-
-    @PatchMapping("/{id}/reprogramar")
-    public Cita reprogramar(@PathVariable Long id, @RequestBody ReprogramarCitaRequest req) {
-        if (req.fecha == null || req.hora == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fecha y hora son obligatorios");
-        }
-        Cita c = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada"));
-
-        LocalDateTime nuevaFechaHora = LocalDateTime.of(LocalDate.parse(req.fecha), LocalTime.parse(req.hora));
-
-        boolean ocupado = repo.existsByDoctor_IdDoctorAndEstadoNotAndFechaHoraAndIdCitaNot(
-                c.getDoctor().getIdDoctor(), Cita.CitaEstado.CANCELADA, nuevaFechaHora, c.getIdCita()
-        );
-        if (ocupado) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "No se puede reprogramar: ya existe una cita activa para este médico a " + nuevaFechaHora + "."
-            );
-        }
-
-        c.setFechaHora(nuevaFechaHora);
-        return repo.save(c);
-    }
-
+    
     @GetMapping("/disponible")
     public Map<String, Object> validarDisponibilidad(
             @RequestParam Long doctorId,
             @RequestParam String fecha,
             @RequestParam String hora
     ) {
+        // Endpoint ligero para validación previa del frontend
         LocalDateTime fechaHora = LocalDateTime.of(LocalDate.parse(fecha), LocalTime.parse(hora));
 
+        // Considera libre si solo hay CANCELADAS
         boolean ocupado = repo.existsByDoctor_IdDoctorAndEstadoNotAndFechaHora(
                 doctorId, Cita.CitaEstado.CANCELADA, fechaHora
         );

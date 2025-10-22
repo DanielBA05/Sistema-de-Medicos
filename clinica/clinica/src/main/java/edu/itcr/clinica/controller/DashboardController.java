@@ -17,11 +17,9 @@ public class DashboardController {
 
     @GetMapping("/")
     public String home(Model model) {
-        
+        // Carga un doctor para mostrar datos en el dashboard inicial
         Doctor doctor = doctorRepo.findAll().stream().findFirst().orElse(null);
         model.addAttribute("doctor", doctor);
-        return "dashboard"; 
+        return "dashboard";
     }
-
-
 }

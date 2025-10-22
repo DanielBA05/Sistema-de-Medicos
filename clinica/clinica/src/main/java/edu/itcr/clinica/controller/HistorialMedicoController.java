@@ -39,68 +39,61 @@ public class HistorialMedicoController {
         this.pacienteRepo = pacienteRepo;
     }
 
-    // ================= DTOs =================
     public static class RecetaDTO {
         public String medicamento;
         public String dosis;
         public String frecuencia;
-        public Integer duracion;  
+        public Integer duracion;
     }
 
+    // DTO de registro de atención
     public static class RegistrarAtencionRequest {
-        public Long citaId;            
-        public String diagnostico;    
-        public String tratamiento;    
-        public List<RecetaDTO> recetas; 
-        public LocalDate fechaConsulta; 
+        public Long citaId;
+        public String diagnostico;
+        public String tratamiento;
+        public List<RecetaDTO> recetas;
+        public LocalDate fechaConsulta;
     }
 
-    // ==================== VISTAS (Thymeleaf) ====================
-
- 
     @GetMapping("/vista")
     public String vistaPacientes(@RequestParam(value = "q", required = false) String q, Model model) {
+        // Búsqueda simple por nombre/apellido o listado ordenado
         List<Paciente> pacientes = (q == null || q.isBlank())
                 ? pacienteRepo.findAllByOrderByApellidoAscNombreAsc()
                 : pacienteRepo.searchByNombreOrApellido(q.trim());
 
         model.addAttribute("pacientes", pacientes);
         model.addAttribute("q", q);
-     
+
         return "listaPacientes";
     }
 
-  
     @GetMapping("/{idPaciente}")
     @Transactional(readOnly = true)
     public String vistaHistorialPorPaciente(@PathVariable Long idPaciente, Model model) {
         Paciente paciente = pacienteRepo.findById(idPaciente)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente no encontrado"));
 
+        // Historiales ordenados descendente por fecha de consulta
         List<HistorialMedico> historiales =
                 historialRepo.findByPaciente_IdPacienteOrderByFechaConsultaDesc(idPaciente);
 
-        // (Opcional) Si deseas mostrar TODAS las citas del paciente:
-        // List<Cita> citas = citaRepo.findByPaciente_IdPacienteOrderByFechaHoraDesc(idPaciente);
-        // model.addAttribute("citas", citas);
-
         model.addAttribute("paciente", paciente);
         model.addAttribute("historiales", historiales);
-        // Sin subcarpeta: templates/detalleHistorial.html
         return "detalleHistorial";
     }
-
-  
 
     @GetMapping
     @ResponseBody
     public List<HistorialMedico> listar() {
+        // Endpoint simple para obtener todos los historiales
         return historialRepo.findAll();
     }
 
     @GetMapping("/por-paciente/{idPaciente}")
     @ResponseBody
     public List<HistorialMedico> listarPorPaciente(@PathVariable Long idPaciente) {
+        // Filtra por paciente manteniendo el orden por fecha
         return historialRepo.findByPaciente_IdPacienteOrderByFechaConsultaDesc(idPaciente);
     }
 
@@ -116,10 +109,12 @@ public class HistorialMedicoController {
     @ResponseBody
     @Transactional
     public HistorialMedico registrar(@RequestBody RegistrarAtencionRequest req) {
+        // Validación de campos obligatorios
         if (req.citaId == null || isBlank(req.diagnostico) || isBlank(req.tratamiento)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "citaId, diagnostico y tratamiento son obligatorios.");
         }
 
+        // Verifica existencia de la cita
         Cita cita = citaRepo.findById(req.citaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada: " + req.citaId));
 
@@ -130,10 +125,10 @@ public class HistorialMedicoController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La cita ya tiene historial.");
         }
 
-    
+        // Construcción del historial a partir de la cita y datos provistos
         HistorialMedico h = new HistorialMedico();
         h.setCita(cita);
-        h.setPaciente(cita.getPaciente()); // redundante pero práctico para consultas
+        h.setPaciente(cita.getPaciente());
         h.setDiagnostico(req.diagnostico.trim());
         h.setTratamiento(req.tratamiento.trim());
 
@@ -144,10 +139,8 @@ public class HistorialMedicoController {
         } else {
             h.setFechaConsulta(LocalDate.now());
         }
-
         h = historialRepo.save(h);
-
-        // Crear recetas (si vienen)
+        // Inserta recetas válidas (ignora entradas vacías) vinculadas al historial
         List<Receta> creadas = new ArrayList<>();
         if (req.recetas != null) {
             for (RecetaDTO r : req.recetas) {
@@ -157,21 +150,17 @@ public class HistorialMedicoController {
                 rec.setMedicamento(r.medicamento.trim());
                 rec.setDosis(r.dosis.trim());
                 rec.setFrecuencia(isBlank(r.frecuencia) ? null : r.frecuencia.trim());
-                rec.setDuracion(r.duracion); 
+                rec.setDuracion(r.duracion);
                 creadas.add(recetaRepo.save(rec));
             }
         }
-
-        // Marcar la cita como ATENDIDA
+        // Al registrar la atención, se marca la cita como ATENDIDA
         cita.setEstado(Cita.CitaEstado.ATENDIDA);
         citaRepo.save(cita);
 
-        // Adjuntar para serializar en la respuesta
+        // Devuelve el historial con las recetas creadas
         h.setRecetas(creadas);
-
         return h;
     }
-
-    
     private boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
 }

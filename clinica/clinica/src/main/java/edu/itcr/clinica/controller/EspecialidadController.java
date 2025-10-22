@@ -23,15 +23,18 @@ public class EspecialidadController {
 
     @GetMapping
     public String listar(Model model) {
+        // Obtiene todas las especialidades para mostrarlas en la vista
         List<Especialidad> especialidades = repo.findAll();
-        model.addAttribute("especialidades", especialidades); 
-        return "especialidades"; 
+        model.addAttribute("especialidades", especialidades);
+        return "especialidades";
     }
 
     @PostMapping
     public String crear(@RequestParam("nombre") String nombre) {
+        // Evita insertar cadenas vacías
         String clean = nombre == null ? "" : nombre.trim();
         if (!clean.isEmpty()) {
+            // Inserta una nueva especialidad si tiene nombre válido
             repo.save(new Especialidad(clean));
         }
         return "redirect:/especialidades";

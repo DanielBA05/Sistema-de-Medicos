@@ -18,11 +18,13 @@ public class RecetaController {
 
     @GetMapping
     public List<Receta> listar() {
+        // Devuelve todas las recetas almacenadas
         return repo.findAll();
     }
 
     @PostMapping
     public Receta crear(@RequestBody Receta r) {
+        // Inserta una nueva receta
         return repo.save(r);
     }
 }
