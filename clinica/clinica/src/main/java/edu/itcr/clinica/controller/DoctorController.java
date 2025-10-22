@@ -26,7 +26,7 @@ public class DoctorController {
         this.espRepo = espRepo;
     }
 
-    // Redirige al primer doctor existente (sistema de un solo doctor)
+    // Redirige al primer doctor existente 
     @GetMapping
     public String root() {
         Long id = doctorRepo.findAll().stream()
