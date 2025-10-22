@@ -41,7 +41,7 @@ public class DoctorController {
         Doctor d = doctorRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
         model.addAttribute("doctor", d);
-        return "doctor"; // templates/doctor.html
+        return "doctor"; 
     }
 
     @GetMapping("/editar/{id}")
@@ -49,7 +49,7 @@ public class DoctorController {
         Doctor d = doctorRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor no encontrado: " + id));
         model.addAttribute("doctor", d);
-        return "doctor_form"; // templates/doctor_form.html
+        return "doctor_form"; 
     }
 
     @PostMapping("/guardar")
@@ -64,7 +64,7 @@ public class DoctorController {
         return "redirect:/doctor/" + d.getIdDoctor();
     }
 
-    // ---------- Gestionar especialidades (vistas) ----------
+   
     @GetMapping("/especialidades/{id}")
     public String editarEspecialidades(@PathVariable Long id, Model model) {
         Doctor d = doctorRepo.findById(id)
@@ -99,7 +99,7 @@ public class DoctorController {
         return "redirect:/doctor/" + id;
     }
 
-    // Crear especialidad “al vuelo” desde el formulario de especialidades
+    // Crear especialidad
     @PostMapping("/especialidades/{id}/crear")
     public String crearEspecialidad(@PathVariable Long id,
                                     @RequestParam("nombre") String nombre,
