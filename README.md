@@ -36,6 +36,7 @@ Selecciona la opción “Clone Repository” o “Get from Version Control”, y
 https://github.com/DanielBA05/Sistema-de-Medicos
 
 Esto descargará el proyecto completo desde GitHub.
+
 3. Una vez clonado, el IDE lo detectará como un proyecto Maven / Spring Boot automáticamente.
 4. Asegúrate de que las dependencias se descarguen correctamente.
 5. En el archivo application.properties, ajusta tus credenciales de base de datos:
@@ -46,6 +47,7 @@ spring.datasource.username=**tu_usuario**
 spring.datasource.password=**tu_contraseña**
 
 spring.jpa.hibernate.ddl-auto=none
+
 6. Busca la clase principal llamada; ClinicaApplication.java
 7. Haz clic en Run
 
