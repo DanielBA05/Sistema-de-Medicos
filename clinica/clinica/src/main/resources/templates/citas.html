@@ -44,7 +44,7 @@
         .actions { display:flex; justify-content:flex-end; gap:.5rem; padding:1rem; border-top:1px solid #e5e7eb; }
         @media (max-width: 980px) { .row { grid-template-columns: 1fr; } }
 
-        /* Secciones atendidas/canceladas */
+        
         .section { border: 1px solid #e5e7eb; border-radius: 10px; margin-top: .75rem; overflow: hidden; }
         .section header { display: flex; align-items: center; justify-content: space-between; padding: .6rem .8rem; background: #fafafa; cursor: pointer; }
         .section header strong { font-weight: 600; }
@@ -59,9 +59,9 @@
             border-radius:10px;
             padding:.6rem .75rem;
         }
-        /* Marca de campo inválido */
+        
         .invalid { border-color: var(--danger) !important; }
-        /* FAB Menú principal */
+        
         .fab-home{
             position:fixed; right:20px; bottom:20px;
             background:#0077b6; color:#fff; border-radius:999px;
@@ -73,7 +73,7 @@
 
 </head>
 
-<!-- Si usas Thymeleaf: <body th:attr="data-doctor-id=${doctor.idDoctor}"> -->
+
 <body data-doctor-id="__DOCTOR_ID__">
 <header>
     <div style="display:flex; align-items:center; gap:.5rem;">
@@ -87,7 +87,7 @@
 
 
 <main class="row">
-    <!-- Calendario mensual -->
+  
     <section class="card">
         <header>
             <div class="month-nav">
@@ -205,8 +205,8 @@
 </dialog>
 
 <script>
-    // Si NO usas Thymeleaf, fija el ID del único doctor aquí:
-    window.DOCTOR_ID = 1; // <-- pon aquí el id real del único doctor
+   
+    window.DOCTOR_ID = 1; 
 </script>
 
 <script>
@@ -284,7 +284,7 @@
         document.getElementById('pickerFecha').value = fmtISODate(state.selectedDate);
     }
 
-    // ===== Data loaders =====
+    // Data loaders
     async function fetchJsonTry(urls) {
         for (const u of urls) {
             try { const r = await fetch(u); if (r.ok) return await r.json(); } catch(e) {}
@@ -479,7 +479,7 @@
         );
     }
 
-    // ===== Crear cita =====
+    // Crear cita
     function setDlgError(msg){
         const box = document.getElementById('dlgError');
         if (!box) return;
@@ -532,7 +532,7 @@
             return;
         }
 
-        // ✅ Verificar si la hora está ocupada (usa el set del modal si existe)
+        // Verifica si la hora está ocupada 
         if ((horasOcupadasModal || horasOcupadas).has(hora)) {
             setDlgError(`La hora ${hora} ya está ocupada. Por favor selecciona otra.`);
             document.getElementById('nc_hora').classList.add('invalid');
@@ -560,7 +560,7 @@
             const codigo   = (detalle && detalle.codigo)   || '';
             const mensaje  = (detalle && detalle.mensaje)  || 'No se pudo crear la cita.';
 
-            // Mensajes bonitos por código
+            
             if (res.status === 409 && codigo === 'HORARIO_ATENDIDO') {
                 setDlgError('Ya se atendió una cita a esta hora. Por favor elige otra hora.');
                 document.getElementById('nc_hora').classList.add('invalid');
@@ -572,7 +572,7 @@
                 return;
             }
 
-            // Fallback (otros errores)
+            
             setDlgError(mensaje);
             document.getElementById('nc_hora').classList.add('invalid');
             return;
@@ -583,7 +583,7 @@
         renderCalendar();
     }
 
-    // ===== Modal Atender =====
+    //  Modal Atender
     const dlgAt = document.getElementById('dlgAtender');
     const recetasBox = document.getElementById('recetasBox');
     const recetasList = document.getElementById('recetasList');
@@ -664,10 +664,10 @@
             return;
         }
         dlgAt.close();
-        cargarCitasDelDia(); // se moverá a “Atendidas”
+        cargarCitasDelDia(); 
     });
 
-    // ===== Eventos UI =====
+    //  Eventos UI 
     document.getElementById('prevMonth').addEventListener('click', () => {
         const d = new Date(state.viewYear, state.viewMonth - 1, 1);
         state.viewYear = d.getFullYear(); state.viewMonth = d.getMonth();
@@ -696,7 +696,7 @@
         document.getElementById('nc_motivo').value = '';
         clearDlgError();
 
-        // Cargar selects y horas ocupadas del día inicial del modal
+        // Carga selects y horas ocupadas del día inicial del modal
         await Promise.all([cargarPacientes(), cargarEspecialidades()]);
         horasOcupadasModal = new Set(horasOcupadas); // por defecto, el día seleccionado en la lista
 
@@ -705,7 +705,7 @@
         document.getElementById('nc_fecha').addEventListener('change', async (ev) => {
             const nuevaFecha = ev.target.value;
             horasOcupadasModal = await buildHorasOcupadasFor(nuevaFecha);
-            // re-validar la hora ya digitada (si hay)
+           
             validateHoraLibre();
         }, { once:false });
     });
@@ -726,7 +726,7 @@
     });
 
 </script>
-<!-- FAB Menú principal -->
+
 <a class="fab-home" th:href="@{/}">🏠 Menú principal</a>
 
 </body>
