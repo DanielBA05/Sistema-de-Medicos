@@ -34,13 +34,17 @@ El proyecto incluye el archivo BD.sql en el repositorio, con toda la estructura 
 1. Abre tu IDE de preferencia (por ejemplo, IntelliJ IDEA, Eclipse o Spring Tools Suite).
 Selecciona la opción “Clone Repository” o “Get from Version Control”, y pega el siguiente enlace:
 https://github.com/DanielBA05/Sistema-de-Medicos
+
 Esto descargará el proyecto completo desde GitHub.
-2. Una vez clonado, el IDE lo detectará como un proyecto Maven / Spring Boot automáticamente.
-3. Asegúrate de que las dependencias se descarguen correctamente.
-4. En el archivo application.properties, ajusta tus credenciales de base de datos:
+3. Una vez clonado, el IDE lo detectará como un proyecto Maven / Spring Boot automáticamente.
+4. Asegúrate de que las dependencias se descarguen correctamente.
+5. En el archivo application.properties, ajusta tus credenciales de base de datos:
 spring.datasource.url=jdbc:postgresql://localhost:5432/clinica_db
+
 spring.datasource.username=**tu_usuario**
+
 spring.datasource.password=**tu_contraseña**
+
 spring.jpa.hibernate.ddl-auto=none
 6. Busca la clase principal llamada; ClinicaApplication.java
 7. Haz clic en Run
