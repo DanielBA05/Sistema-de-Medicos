@@ -13,20 +13,19 @@ public class Doctor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_doctor")
-    private Long idDoctor;
+    private Long idDoctor; // Identificador único del doctor
 
     @Column(nullable = false, length = 100)
-    private String nombre;
+    private String nombre; // Nombre del doctor
 
     @Column(nullable = false, length = 100)
-    private String apellido;
+    private String apellido; // Apellido del doctor
 
     @Column(length = 50)
-    private String telefono;
+    private String telefono; // Número de teléfono 
 
     @Column(length = 150)
-    private String direccion;
-
+    private String direccion; // Dirección del doctor 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "doc_especialidad",
@@ -34,11 +33,12 @@ public class Doctor {
             joinColumns = @JoinColumn(name = "id_doctor"),
             inverseJoinColumns = @JoinColumn(name = "id_especialidad")
     )
-    @JsonIgnore
-    private Set<Especialidad> especialidades = new HashSet<>();
+    @JsonIgnore // pusimos esto para evitar recursión en la serialización JSON
+    private Set<Especialidad> especialidades = new HashSet<>(); // Conjunto de especialidades del doctor
+}
 
 
-    // ====== Constructores ======
+    //  Constructores 
     public Doctor() {}
 
     public Doctor(String nombre, String apellido) {
@@ -46,7 +46,7 @@ public class Doctor {
         this.apellido = apellido;
     }
 
-    // ====== Getters & Setters ======
+    // métodos Getters y Setters
     public Long getIdDoctor() { return idDoctor; }
     public void setIdDoctor(Long idDoctor) { this.idDoctor = idDoctor; }
 
@@ -67,7 +67,7 @@ public class Doctor {
         this.especialidades = especialidades != null ? especialidades : new HashSet<>();
     }
 
-    // ====== Helpers convenientes ======
+    // Helpers convenientes
     public void addEspecialidad(Especialidad e) {
         if (e == null) return;
         this.especialidades.add(e);
@@ -80,7 +80,7 @@ public class Doctor {
         e.getDoctores().remove(this);
     }
 
-    // ====== equals & hashCode (por id) ======
+    //  equals y hashCode 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -93,8 +93,7 @@ public class Doctor {
     public int hashCode() {
         return Objects.hash(idDoctor);
     }
-
-    // ====== toString ======
+ 
     @Override
     public String toString() {
         return "Doctor{" +

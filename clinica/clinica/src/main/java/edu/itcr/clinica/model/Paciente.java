@@ -10,25 +10,25 @@ public class Paciente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_paciente")
-    private Long idPaciente;
+    private Long idPaciente; // Identificador único del paciente
 
     @Column(nullable = false, length = 100)
-    private String nombre;
+    private String nombre; // Nombre del paciente
 
     @Column(nullable = false, length = 100)
-    private String apellido;
+    private String apellido; // Apellido del paciente
 
     @Column(name = "fecha_nacimiento", nullable = false)
-    private LocalDate fechaNacimiento;
+    private LocalDate fechaNacimiento; // Fecha de nacimiento
 
     @Column(length = 1)
-    private String sexo;
+    private String sexo; // Género del paciente (M/F)
 
-    private String direccion;
-    private String telefono;
-    private String correo;
+    private String direccion; // Dirección del paciente
+    private String telefono;  // Teléfono de contacto
+    private String correo;    // Correo electrónico
 
-    // Getters y setters
+    // getters y setters
     public Long getIdPaciente() { return idPaciente; }
     public void setIdPaciente(Long idPaciente) { this.idPaciente = idPaciente; }
 
@@ -53,3 +53,4 @@ public class Paciente {
     public String getCorreo() { return correo; }
     public void setCorreo(String correo) { this.correo = correo; }
 }
+
