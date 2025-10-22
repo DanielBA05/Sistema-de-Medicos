@@ -22,10 +22,11 @@ public class Doctor {
     private String apellido; // Apellido del doctor
 
     @Column(length = 50)
-    private String telefono; // Número de teléfono 
+    private String telefono; // Número de teléfono
 
     @Column(length = 150)
-    private String direccion; // Dirección del doctor 
+    private String direccion; // Dirección del doctor
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "doc_especialidad",
@@ -35,10 +36,8 @@ public class Doctor {
     )
     @JsonIgnore // pusimos esto para evitar recursión en la serialización JSON
     private Set<Especialidad> especialidades = new HashSet<>(); // Conjunto de especialidades del doctor
-}
 
-
-    //  Constructores 
+    //  Constructores
     public Doctor() {}
 
     public Doctor(String nombre, String apellido) {
@@ -80,7 +79,7 @@ public class Doctor {
         e.getDoctores().remove(this);
     }
 
-    //  equals y hashCode 
+    //  equals y hashCode
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -93,7 +92,7 @@ public class Doctor {
     public int hashCode() {
         return Objects.hash(idDoctor);
     }
- 
+
     @Override
     public String toString() {
         return "Doctor{" +
